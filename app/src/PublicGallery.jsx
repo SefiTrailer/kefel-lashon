@@ -136,6 +136,36 @@ export default function PublicGallery({ images, metadata }) {
     useEffect(() => { setShowExplanation(false); }, [currentIndex]);
     useEffect(() => { setCurrentIndex(0); }, [searchQuery]);
 
+    // ── Touch Handling (Swipe) ───────────────────────────────────────────────────
+    const [touchStartX, setTouchStartX] = useState(0);
+    const [touchEndX, setTouchEndX] = useState(0);
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e) => {
+        setTouchEndX(0);
+        setTouchStartX(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e) => setTouchEndX(e.targetTouches[0].clientX);
+
+    const onTouchEnd = () => {
+        if (!touchStartX || !touchEndX) return;
+        const distance = touchStartX - touchEndX;
+        if (distance > minSwipeDistance) nextImage(); // Swiped left -> Next
+        if (distance < -minSwipeDistance) prevImage(); // Swiped right -> Prev
+    };
+
+    // ── Wheel Handling (Fullscreen) ───────────────────────────────────────────────
+    useEffect(() => {
+        const handleWheel = (e) => {
+            if (!isFullscreen) return;
+            if (e.deltaY > 0) nextImage(); // Scroll down -> Next
+            else if (e.deltaY < 0) prevImage(); // Scroll up -> Prev
+        };
+        window.addEventListener('wheel', handleWheel);
+        return () => window.removeEventListener('wheel', handleWheel);
+    }, [isFullscreen, currentIndex, displayImages.length]);
+
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (isSearchOpen || isAboutOpen) return;
@@ -208,7 +238,7 @@ export default function PublicGallery({ images, metadata }) {
                         <p className={theme.textClass}>נסה מילת חיפוש אחרת!</p>
                     </div>
                 ) : (
-                    <div className="w-full relative">
+                    <div className="w-full relative shrink-0">
                         {/* Frame */}
                         <div
                             className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full`}
@@ -229,7 +259,11 @@ export default function PublicGallery({ images, metadata }) {
                                 </div>
 
                                 {/* Image + nav arrows wrapper (no overflow-hidden so arrows aren't clipped) */}
-                                <div className="relative w-full">
+                                <div className="relative w-full"
+                                    onTouchStart={onTouchStart}
+                                    onTouchMove={onTouchMove}
+                                    onTouchEnd={onTouchEnd}
+                                >
                                     {/* Image area — click to fullscreen */}
                                     <div className={`relative flex items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in`}
                                         style={{ aspectRatio: '1/1', maxHeight: '55vh', padding: '16px' }}
@@ -256,20 +290,20 @@ export default function PublicGallery({ images, metadata }) {
 
                                     </div>
 
-                                    {/* Nav arrows — siblings of image div, so not clipped */}
+                                    {/* Nav arrows — siblings of image div, so not clipped. Positioned slightly outside on desktop, inside on mobile */}
                                     <button
                                         onClick={nextImage}
                                         disabled={currentIndex === displayImages.length - 1}
-                                        className={`absolute top-1/2 -translate-y-1/2 right-3 z-30 ${theme.navBtnCls} backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group border`}
+                                        className={`absolute top-1/2 -translate-y-1/2 -right-3 md:-right-6 z-30 ${theme.navBtnCls} backdrop-blur-sm p-1.5 sm:p-3 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group border`}
                                     >
-                                        <ChevronRight size={28} className="group-hover:translate-x-0.5 transition-transform" />
+                                        <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
                                     </button>
                                     <button
                                         onClick={prevImage}
                                         disabled={currentIndex === 0}
-                                        className={`absolute top-1/2 -translate-y-1/2 left-3 z-30 ${theme.navBtnCls} backdrop-blur-sm p-2 sm:p-3 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group border`}
+                                        className={`absolute top-1/2 -translate-y-1/2 -left-3 md:-left-6 z-30 ${theme.navBtnCls} backdrop-blur-sm p-1.5 sm:p-3 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group border`}
                                     >
-                                        <ChevronLeft size={28} className="group-hover:-translate-x-0.5 transition-transform" />
+                                        <ChevronLeft className="w-5 h-5 sm:w-7 sm:h-7 group-hover:-translate-x-0.5 transition-transform" />
                                     </button>
                                 </div>
 
@@ -299,112 +333,125 @@ export default function PublicGallery({ images, metadata }) {
                     </div>
                 )}
 
-            </div>
-            {/* end unified container */}
+                {/* ── About Section (Inline, moved below the main gallery) ── */}
+                <div className="w-full mt-12 bg-slate-900/60 backdrop-blur-xl border border-white/10 p-6 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden flex flex-col">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-            {/* ── Theme Switcher (bottom-right floating) ──────────────────────── */}
-            <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
-                {isThemeMenuOpen && (
-                    <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                        {THEMES.map((t, idx) => (
-                            <button
-                                key={t.id}
-                                onClick={() => setTheme(idx)}
-                                className={`px-4 py-2 rounded-full text-sm font-semibold border backdrop-blur-md transition-all shadow-lg
-                  ${idx === themeIndex
-                                        ? 'ring-2 ring-white/60 scale-105'
-                                        : 'opacity-80 hover:opacity-100 hover:scale-105'
-                                    } ${theme.themeBtnCls}`}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
-                <button
-                    onClick={() => setIsThemeMenuOpen(p => !p)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full border backdrop-blur-md font-semibold shadow-xl transition-all hover:scale-105 ${theme.themeBtnCls}`}
-                    title="החלף ערכת עיצוב"
-                >
-                    <Palette size={18} />
-                    <span className="text-sm">{theme.label}</span>
-                </button>
-            </div>
+                    <h2 className={`text-3xl md:text-4xl font-black mb-6 flex items-center justify-center gap-3 text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad} drop-shadow-md text-center`}>
+                        <Info size={32} className="text-white drop-shadow-md" />
+                        אודות הפרויקט
+                    </h2>
 
-            {/* ── About Modal ──────────────────────────────────────────────────────── */}
-            {isAboutOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setIsAboutOpen(false)} />
-                    <div className="relative w-full max-w-xl bg-gradient-to-b from-slate-800 to-slate-900 rounded-[2rem] p-5 border border-slate-700 shadow-2xl animate-in fade-in zoom-in-95 duration-300 text-center">
-                        <button onClick={() => setIsAboutOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800 rounded-full p-2 transition-colors z-10">
-                            <X size={20} />
-                        </button>
-
-                        {/* Logo + Title */}
-                        <img src="./logo.png" alt="לוגו" className="h-16 mx-auto mb-2 drop-shadow-[0_0_15px_rgba(236,72,153,0.3)]" style={{ transform: 'scaleX(1.15)' }} />
-                        <h3 className="text-2xl font-['Secular_One',sans-serif] text-white mb-1 tracking-wide">ברוכים הבאים לכפל לשון!</h3>
-                        <p className="text-purple-300 text-sm mb-3">פרויקט משחקי מילים משוגע ומצחיק מאת ספי.</p>
-
-                        {/* Description */}
-                        <div className="bg-slate-800/50 px-4 py-3 rounded-2xl border border-slate-700 mb-4 text-slate-300 text-sm leading-relaxed">
+                    <div className="flex flex-col md:flex-row gap-8 items-center text-slate-300 md:text-lg">
+                        <div className="flex-1 leading-relaxed text-center sm:text-right font-medium">
+                            ברוכים הבאים ל<strong className="text-white mx-1 text-xl drop-shadow-md">כפל לשון</strong>!
+                            <br /><br />
                             מאות איורים דיגיטליים הממחישים ביטויים ומשחקי מילים בעברית — להעלות חיוך ולחגוג את השפה בצורתה הכיפית ביותר.
                             <br />
-                            <span className="text-purple-400 font-semibold">יצירה ועריכה: ספי רייכקינד</span>
+                            <span className="text-purple-400 font-semibold block mt-4 text-xl">יצירה ועריכה: ספי רייכקינד</span>
                         </div>
 
                         {/* QR + WhatsApp side by side */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row items-center gap-4 bg-black/30 p-4 md:p-5 rounded-3xl border border-white/5 shadow-inner">
                             {/* QR code */}
-                            <div className="flex-shrink-0">
+                            <div className="flex-shrink-0 bg-white p-2 rounded-2xl shadow-md rotate-1 hover:rotate-0 transition-transform">
                                 <QRCodeDisplay url="https://sefitrailer.github.io/kefel-lashon/" />
                             </div>
 
                             {/* WhatsApp buttons stacked on the left of QR */}
-                            <div className="flex flex-col gap-2 flex-1">
+                            <div className="flex flex-col gap-3 w-full sm:w-auto">
                                 <a
                                     href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-3 py-2.5 rounded-2xl font-bold hover:bg-[#20ba56] transition-colors shadow-lg text-sm"
+                                    className="flex items-center justify-center gap-2 bg-[#25D366] text-white px-5 py-3 rounded-xl font-bold hover:bg-[#20ba56] transition-all shadow-lg text-sm sm:text-base hover:scale-105"
                                 >
-                                    <MessageCircle size={18} />
+                                    <MessageCircle size={20} />
                                     📢 ערוץ וואטסאפ
                                 </a>
                                 <a
                                     href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="flex items-center justify-center gap-2 bg-emerald-700 text-white px-3 py-2.5 rounded-2xl font-bold hover:bg-emerald-800 transition-colors shadow-lg text-sm"
+                                    className="flex items-center justify-center gap-2 bg-emerald-700 text-white px-5 py-3 rounded-xl font-bold hover:bg-emerald-800 transition-all shadow-lg text-sm sm:text-base hover:scale-105"
                                 >
-                                    <MessageCircle size={18} />
+                                    <MessageCircle size={20} />
                                     👥 קבוצת וואטסאפ
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+
+            {/* ── Theme Select Button ────────────────────────────────────────── */}
+            <div className="fixed bottom-6 right-6 z-50">
+                <button
+                    onClick={() => setIsThemeMenuOpen(!isThemeMenuOpen)}
+                    className={`${theme.themeBtnCls} p-3 sm:p-4 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-2`}
+                >
+                    <Palette size={26} className="drop-shadow-md" />
+                </button>
+
+                {isThemeMenuOpen && (
+                    <div className="absolute bottom-full right-0 mb-4 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-2 w-40 flex flex-col gap-1 shadow-2xl animate-in slide-in-from-bottom-5">
+                        <div className="text-white/50 text-[10px] uppercase tracking-wider px-2 pt-1 pb-2 font-black">בחר עיצוב</div>
+                        {THEMES.map((t, i) => (
+                            <button
+                                key={t.id}
+                                onClick={() => setTheme(i)}
+                                className={`text-right px-4 py-3 rounded-xl transition-all font-bold tracking-wide border border-transparent ${themeIndex === i
+                                    ? 'bg-white/20 text-white border-white/30 shadow-inner'
+                                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                                    }`}
+                            >
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
 
             {/* ── Fullscreen Lightbox ────────────────────────────────────────── */}
             {isFullscreen && (
                 <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm cursor-zoom-out animate-in fade-in duration-200"
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200"
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={onTouchEnd}
                     onClick={() => setIsFullscreen(false)}
                 >
                     <button
-                        className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-10"
-                        onClick={() => setIsFullscreen(false)}
+                        className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[70] cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
                     >
                         <X size={28} />
                     </button>
+
+                    {/* Fullscreen Arrows */}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                        disabled={currentIndex === displayImages.length - 1}
+                        className={`absolute top-1/2 -translate-y-1/2 right-4 md:right-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
+                    >
+                        <ChevronRight size={32} />
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                        disabled={currentIndex === 0}
+                        className={`absolute top-1/2 -translate-y-1/2 left-4 md:left-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
+                    >
+                        <ChevronLeft size={32} />
+                    </button>
+
                     <img
                         src={`./images/${encodeURIComponent(currentFile)}`}
                         alt={fileMetadata?.title || 'תמונה'}
-                        className="max-w-[95vw] max-h-[95vh] object-contain drop-shadow-[0_0_60px_rgba(0,0,0,0.9)] rounded-2xl"
-                        onClick={(e) => e.stopPropagation()}
+                        className="max-w-[95vw] max-h-[95vh] object-contain drop-shadow-[0_0_60px_rgba(0,0,0,0.9)] rounded-2xl cursor-zoom-out"
+                        onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
                     />
                     {fileMetadata?.title && (
-                        <div className="absolute bottom-4 right-6 max-w-[220px] bg-black/70 backdrop-blur-md text-white px-4 py-3 rounded-2xl text-base font-['Varela_Round',sans-serif] border border-white/20 text-right leading-snug">
+                        <div className="absolute bottom-4 right-6 max-w-[220px] bg-black/70 backdrop-blur-md text-white px-4 py-3 rounded-2xl text-base font-['Varela_Round',sans-serif] border border-white/20 text-right leading-snug z-[70]">
                             {fileMetadata.title}
                         </div>
                     )}
