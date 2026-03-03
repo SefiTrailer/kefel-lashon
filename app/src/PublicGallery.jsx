@@ -84,7 +84,8 @@ export default function PublicGallery({ images, metadata }) {
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [showExplanation, setShowExplanation] = useState(false);
-    const [sortOrder, setSortOrder] = useState('newest');
+    const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'random'
+    const [viewMode, setViewMode] = useState('single'); // 'single', 'grid-2x2', 'grid-3x3'
     const [themeIndex, setThemeIndex] = useState(() => {
         try {
             const saved = localStorage.getItem('kefel-theme');
@@ -150,10 +151,32 @@ export default function PublicGallery({ images, metadata }) {
     const currentFile = displayImages[currentIndex];
     const fileMetadata = currentFile ? metadata[currentFile] : null;
 
-    const nextImage = () => { if (currentIndex < displayImages.length - 1) { setCurrentIndex(p => p + 1); setShowExplanation(false); } };
-    const prevImage = () => { if (currentIndex > 0) { setCurrentIndex(p => p - 1); setShowExplanation(false); } };
+    const getGridSize = () => viewMode === 'grid-3x3' ? 9 : (viewMode === 'grid-2x2' ? 4 : 1);
 
-    useEffect(() => { setCurrentIndex(0); }, [searchQuery]);
+    const nextImage = () => {
+        const step = getGridSize();
+        if (currentIndex + step < displayImages.length) {
+            setCurrentIndex(p => p + step);
+            setShowExplanation(false);
+        } else if (currentIndex < displayImages.length - 1) {
+            // If near the end, just go to the very last available chunk
+            setCurrentIndex(displayImages.length - 1);
+            setShowExplanation(false);
+        }
+    };
+
+    const prevImage = () => {
+        const step = getGridSize();
+        if (currentIndex - step >= 0) {
+            setCurrentIndex(p => p - step);
+            setShowExplanation(false);
+        } else if (currentIndex > 0) {
+            setCurrentIndex(0);
+            setShowExplanation(false);
+        }
+    };
+
+    useEffect(() => { setCurrentIndex(0); }, [searchQuery, viewMode]);
 
     // ── Touch Handling (Swipe) ───────────────────────────────────────────────────
     const [touchStartX, setTouchStartX] = useState(0);
@@ -280,26 +303,46 @@ export default function PublicGallery({ images, metadata }) {
                                         onTouchEnd={onTouchEnd}
                                     >
                                         {/* Image area — click to fullscreen */}
-                                        <div className={`relative flex-1 flex items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0`}
+                                        <div className={`relative flex-1 flex flex-col items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0`}
                                             style={{ padding: '8px' }}
-                                            onClick={() => setIsFullscreen(true)}>
+                                            onClick={() => viewMode === 'single' ? setIsFullscreen(true) : null}>
 
                                             {/* Glow behind image */}
                                             <div className={`absolute inset-0 bg-gradient-to-t ${theme.glowClass} to-transparent opacity-50 mix-blend-screen pointer-events-none`} />
 
-                                            <img
-                                                key={currentFile}
-                                                src={`./images/${encodeURIComponent(currentFile)}`}
-                                                alt={fileMetadata?.title || 'תמונה'}
-                                                className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] relative z-10 animate-in zoom-in-95 duration-500"
-                                                style={{ borderRadius: '12px' }}
-                                                loading="lazy"
-                                            />
-
-                                            {/* Topic badge */}
-                                            {fileMetadata?.topic && (
-                                                <div className={`absolute top-4 right-4 z-20 ${theme.topicBadgeCls} text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg border backdrop-blur-md -rotate-1`}>
-                                                    📌 {fileMetadata.topic}
+                                            {viewMode === 'single' ? (
+                                                <>
+                                                    <img
+                                                        key={currentFile}
+                                                        src={`./images/${encodeURIComponent(currentFile)}`}
+                                                        alt={fileMetadata?.title || 'תמונה'}
+                                                        className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] relative z-10 animate-in zoom-in-95 duration-500"
+                                                        style={{ borderRadius: '12px' }}
+                                                        loading="lazy"
+                                                    />
+                                                    {fileMetadata?.topic && (
+                                                        <div className={`absolute top-4 right-4 z-20 ${theme.topicBadgeCls} text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg border backdrop-blur-md -rotate-1`}>
+                                                            📌 {fileMetadata.topic}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className={`grid gap-2 sm:gap-4 p-2 w-full h-full relative z-10 ${viewMode === 'grid-3x3' ? 'grid-cols-3 grid-rows-3' : 'grid-cols-2 grid-rows-2'}`}>
+                                                    {displayImages.slice(currentIndex, currentIndex + getGridSize()).map((file, idx) => (
+                                                        <div key={file} className="relative w-full h-full cursor-zoom-in group" onClick={(e) => { e.stopPropagation(); setCurrentIndex(currentIndex + idx); setViewMode('single'); setIsFullscreen(true); }}>
+                                                            <img
+                                                                src={`./images/${encodeURIComponent(file)}`}
+                                                                alt={metadata[file]?.title || 'תמונה'}
+                                                                className="w-full h-full object-cover filter drop-shadow-md rounded-xl transition-transform group-hover:scale-105"
+                                                                loading="lazy"
+                                                            />
+                                                            {metadata[file]?.title && (
+                                                                <div className="absolute bottom-0 w-full bg-black/70 backdrop-blur-sm text-white text-xs sm:text-sm text-center py-1 sm:py-1.5 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis px-2">
+                                                                    {metadata[file].title}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
 
@@ -312,7 +355,7 @@ export default function PublicGallery({ images, metadata }) {
                                                 {(() => {
                                                     const rawTags = fileMetadata?.tags || fileMetadata?.topic || '';
                                                     const tagsList = Array.isArray(rawTags) ? rawTags : rawTags.split(',').map(t => t.trim()).filter(Boolean);
-                                                    if (tagsList.length === 0) return <span className="text-white/30 text-sm italic">אין תיוגים</span>;
+                                                    if (tagsList.length === 0 || viewMode !== 'single') return <span className="text-white/30 text-sm italic">אין תיוגים</span>;
                                                     return tagsList.map(tag => (
                                                         <button
                                                             key={tag}
@@ -325,25 +368,47 @@ export default function PublicGallery({ images, metadata }) {
                                                 })()}
                                             </div>
 
-                                            <div className="flex items-center gap-2 shrink-0 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5 z-40 relative">
-                                                <span className="text-white/70 text-sm font-bold">מיון:</span>
-                                                <select
-                                                    value={sortOrder}
-                                                    onChange={(e) => setSortOrder(e.target.value)}
-                                                    className="bg-transparent text-white text-sm outline-none cursor-pointer font-medium appearance-none select-none"
-                                                    style={{ paddingLeft: '0.2rem' }}
-                                                >
-                                                    <option value="newest" className="bg-slate-900">הכי חדשים</option>
-                                                    <option value="random" className="bg-slate-900">אקראי</option>
-                                                </select>
-                                                <div className="pointer-events-none text-white/50 text-xs mr-1">▼</div>
+                                            <div className="flex items-center gap-4 shrink-0 bg-white/5 px-2 py-1.5 rounded-xl border border-white/5 z-40 relative">
+                                                {/* View Mode Icons */}
+                                                <div className="flex items-center gap-1 border-l border-white/20 pl-4">
+                                                    <button onClick={() => setViewMode('single')} className={`p-1 rounded transition-colors ${viewMode === 'single' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white'}`} title="תמונה אחת">
+                                                        <div className="w-5 h-5 border-[2px] border-current rounded-sm"></div>
+                                                    </button>
+                                                    <button onClick={() => setViewMode('grid-2x2')} className={`p-1 rounded transition-colors ${viewMode === 'grid-2x2' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white'}`} title="רשת 2x2">
+                                                        <div className="w-5 h-5 grid grid-cols-2 grid-rows-2 gap-[2px]">
+                                                            <div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div>
+                                                            <div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div>
+                                                        </div>
+                                                    </button>
+                                                    <button onClick={() => setViewMode('grid-3x3')} className={`p-1 rounded transition-colors ${viewMode === 'grid-3x3' ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white'}`} title="רשת 3x3">
+                                                        <div className="w-5 h-5 grid grid-cols-3 grid-rows-3 gap-[1px]">
+                                                            <div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div>
+                                                            <div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div>
+                                                            <div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div><div className="bg-current rounded-[1px]"></div>
+                                                        </div>
+                                                    </button>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-white/70 text-sm font-bold">מיון:</span>
+                                                    <select
+                                                        value={sortOrder}
+                                                        onChange={(e) => setSortOrder(e.target.value)}
+                                                        className="bg-transparent text-white text-sm outline-none cursor-pointer font-medium appearance-none select-none"
+                                                        style={{ paddingLeft: '0.2rem' }}
+                                                    >
+                                                        <option value="newest" className="bg-slate-900">הכי חדשים</option>
+                                                        <option value="random" className="bg-slate-900">אקראי</option>
+                                                    </select>
+                                                    <div className="pointer-events-none text-white/50 text-xs mr-1">▼</div>
+                                                </div>
                                             </div>
                                         </div>
 
                                         {/* Nav arrows — siblings of image div, so not clipped. Positioned slightly outside on desktop, inside on mobile */}
                                         <button
                                             onClick={nextImage}
-                                            disabled={currentIndex === displayImages.length - 1}
+                                            disabled={currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1}
                                             className={`absolute top-1/2 -translate-y-1/2 -right-3 md:-right-6 z-30 ${theme.navBtnCls} backdrop-blur-sm p-1.5 sm:p-3 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group border`}
                                         >
                                             <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
@@ -375,11 +440,16 @@ export default function PublicGallery({ images, metadata }) {
                             <button onClick={() => setShowExplanation(false)} className="self-end p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors mb-4 shrink-0">
                                 <X size={20} />
                             </button>
-                            <div className="text-center pb-4">
-                                <h3 className={`text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad}`}>ההסבר</h3>
-                                <p className={`text-lg md:text-xl ${theme.explainTextCls} leading-relaxed mx-auto font-medium`}>
-                                    {fileMetadata?.explanation}
-                                </p>
+                            <div className="text-center pb-4 flex-1 flex flex-col justify-between">
+                                <div>
+                                    <h3 className={`text-2xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad}`}>ההסבר</h3>
+                                    <p className={`text-lg md:text-xl ${theme.explainTextCls} leading-relaxed mx-auto font-medium`}>
+                                        {fileMetadata?.explanation}
+                                    </p>
+                                </div>
+                                <div className="mt-8 pt-4 border-t border-white/10 text-white/40 text-xs sm:text-sm font-medium">
+                                    * ההסבר נוסח ע"י בינה מלאכותית (AI) ועלול להכיל אי דיוקים.
+                                </div>
                             </div>
                         </div>
                     )}
@@ -419,7 +489,7 @@ export default function PublicGallery({ images, metadata }) {
                                         href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="relative flex items-center justify-center text-[#25D366] hover:text-[#20ba56] transition-transform hover:scale-110 drop-shadow-md rounded-full bg-[#25D366]/10 p-1"
+                                        className="relative flex items-center justify-center text-[#25D366] hover:text-[#20ba56] transition-transform hover:scale-110 rotate-1 hover:rotate-0 drop-shadow-md rounded-full bg-[#25D366]/10 p-1"
                                         title="ערוץ"
                                     >
                                         <MessageCircle size={48} strokeWidth={1.5} />
@@ -429,7 +499,7 @@ export default function PublicGallery({ images, metadata }) {
                                         href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="relative flex items-center justify-center text-emerald-500 hover:text-emerald-400 transition-transform hover:scale-110 drop-shadow-md rounded-full bg-emerald-500/10 p-1"
+                                        className="relative flex items-center justify-center text-emerald-500 hover:text-emerald-400 transition-transform hover:scale-110 -rotate-1 hover:rotate-0 drop-shadow-md rounded-full bg-emerald-500/10 p-1"
                                         title="קבוצה"
                                     >
                                         <MessageCircle size={48} strokeWidth={1.5} />
