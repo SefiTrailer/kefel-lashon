@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { ChevronRight, ChevronLeft, Search, X, MessageCircle, Info, Palette, Linkedin } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Search, X, MessageCircle, Info, Palette, Linkedin, Share2 } from 'lucide-react';
 import QRCodeDisplay from './components/QRCodeDisplay';
 
 // ── Themes ────────────────────────────────────────────────────────────────────
@@ -280,24 +280,24 @@ export default function PublicGallery({ images, metadata }) {
 
                                     {/* Title Bar with inline Search and About - Completely hidden in Grid mode */}
                                     {viewMode === 'single' && (
-                                        <div className="px-3 sm:px-6 py-4 flex items-center justify-between relative flex-shrink-0 z-20 w-full min-h-[5rem]">
+                                        <div className="px-3 sm:px-6 py-4 grid grid-cols-[auto_1fr_auto] gap-3 items-center justify-between relative flex-shrink-0 z-20 w-full min-h-[5rem]">
                                             <div className={`absolute bottom-0 left-0 w-full h-[2px] bg-gradient-to-r ${theme.frameGrad} opacity-60`} />
 
                                             {/* Right: Search button (only single mode) */}
-                                            <div className="relative z-10 flex-shrink-0 w-10 sm:w-12 h-10 sm:h-12 flex justify-end">
+                                            <div className="relative z-10 flex-shrink-0 flex items-center justify-end w-12">
                                                 <button
                                                     onClick={() => setIsSearchOpen(true)}
-                                                    className={`p-2 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${theme.headerBtnSearchCls} w-full h-full animate-in fade-in duration-300`}
+                                                    className={`w-10 h-10 lg:w-11 lg:h-11 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${theme.headerBtnSearchCls} animate-in fade-in duration-300`}
                                                     title="חיפוש"
                                                 >
-                                                    <Search size={22} />
+                                                    <Search size={20} />
                                                 </button>
                                             </div>
 
                                             {/* Center: Title absolutely centered within the bar (only single mode) */}
-                                            <div className="absolute inset-x-0 w-full h-full flex items-center justify-center pointer-events-none px-16 sm:px-24">
+                                            <div className="flex-1 w-full flex items-center justify-center px-1 overflow-hidden">
                                                 <h2
-                                                    className={`text-2xl sm:text-3xl md:text-5xl font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad} text-center leading-tight transition-opacity duration-300`}
+                                                    className={`text-[clamp(1.3rem,4vw,2.5rem)] font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad} text-center leading-tight transition-opacity duration-300 break-words line-clamp-2`}
                                                     style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.3))' }}
                                                 >
                                                     {fileMetadata?.title || ''}
@@ -305,19 +305,19 @@ export default function PublicGallery({ images, metadata }) {
                                             </div>
 
                                             {/* Left: Explain button overlay trigger (only single mode) */}
-                                            <div className="relative z-10 w-24 sm:w-32 flex justify-start">
-                                                {fileMetadata?.explanation && (
+                                            <div className="relative z-10 w-24 sm:w-28 flex items-center justify-start flex-shrink-0">
+                                                {fileMetadata?.explanation ? (
                                                     <button
                                                         onClick={() => setShowExplanation(!showExplanation)}
-                                                        className={`flex items-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 px-3 rounded-2xl backdrop-blur-md transition-all ${theme.headerBtnAboutCls} flex-shrink-0 whitespace-nowrap text-sm sm:text-base font-bold animate-in fade-in duration-300`}
+                                                        className={`flex items-center gap-1.5 p-1.5 sm:p-2 px-2.5 sm:px-3 rounded-2xl backdrop-blur-md transition-all ${theme.headerBtnAboutCls} whitespace-nowrap text-xs sm:text-sm font-bold animate-in fade-in duration-300`}
                                                     >
                                                         <div className="flex flex-col items-end leading-snug text-right pointer-events-none">
                                                             <span>להסבר</span>
                                                             <span>לחץ כאן</span>
                                                         </div>
-                                                        <ChevronLeft size={20} sm={{ size: 24 }} strokeWidth={2.5} className={`transition-transform duration-300 shrink-0 ${showExplanation ? '-rotate-90' : 'rotate-0'}`} />
+                                                        <ChevronLeft size={18} sm={{ size: 22 }} strokeWidth={2.5} className={`transition-transform duration-300 shrink-0 ${showExplanation ? '-rotate-90' : 'rotate-0'}`} />
                                                     </button>
-                                                )}
+                                                ) : <div className="invisible w-full h-10"></div>}
                                             </div>
                                         </div>
                                     )}
@@ -515,10 +515,30 @@ export default function PublicGallery({ images, metadata }) {
                             </div>
 
                             {/* QR + Socials side by side */}
-                            <div className="flex flex-row justify-center items-center gap-4 xl:gap-6 bg-black/30 p-3 xl:p-4 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap">
-                                {/* Custom QR image */}
-                                <div className="flex-shrink-0 border-2 border-white/20 bg-white/10 rounded-xl shadow-md rotate-1 hover:rotate-0 transition-transform flex items-center justify-center overflow-hidden w-[100px] h-[100px] xl:w-[124px] xl:h-[124px] p-2">
-                                    <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain" />
+                            <div className="flex flex-row justify-center items-center gap-6 xl:gap-8 bg-black/30 p-4 xl:p-6 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap">
+                                {/* Custom QR image + Share */}
+                                <div className="flex flex-col items-center gap-3 w-[140px] xl:w-[150px]">
+                                    <div className="flex-shrink-0 border-2 border-white/20 bg-white/10 rounded-xl shadow-md rotate-1 hover:rotate-0 transition-transform flex items-center justify-center overflow-hidden w-full h-[140px] xl:h-[150px] p-2">
+                                        <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain" />
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const url = window.location.href;
+                                            try {
+                                                if (navigator.share) {
+                                                    await navigator.share({ title: 'כפלשון', url: url });
+                                                } else {
+                                                    await navigator.clipboard.writeText(url);
+                                                    alert('הקישור הועתק הלוח!');
+                                                }
+                                            } catch (err) { }
+                                        }}
+                                        className="w-full bg-white/10 hover:bg-white/20 text-white font-bold py-2.5 px-3 rounded-lg border border-white/20 flex flex-row items-center justify-center gap-2 transition-all shadow-md active:scale-95"
+                                        title="שתף קישור"
+                                    >
+                                        <span className="text-sm">שתף / העתק</span>
+                                        <Share2 size={16} />
+                                    </button>
                                 </div>
 
                                 {/* Social buttons stacked vertically */}
@@ -527,7 +547,7 @@ export default function PublicGallery({ images, metadata }) {
                                         href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="relative flex items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-110 rotate-1 hover:rotate-0 drop-shadow-md border-[2.5px] border-[#25D366] rounded-lg p-1 w-12 h-12"
+                                        className="relative flex items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-110 rotate-1 hover:rotate-0 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-lg p-1 w-12 h-12"
                                         title="ערוץ"
                                     >
                                         <MessageCircle size={28} strokeWidth={1.5} className="shrink-0" />
@@ -537,7 +557,7 @@ export default function PublicGallery({ images, metadata }) {
                                         href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="relative flex items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-110 -rotate-1 hover:rotate-0 drop-shadow-md border-[2.5px] border-[#25D366] rounded-lg p-1 w-12 h-12 mt-3"
+                                        className="relative flex items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-110 -rotate-1 hover:rotate-0 drop-shadow-md border-[2.5px] border-[#25D366] rounded-lg p-1 w-12 h-12 mt-2"
                                         title="קבוצה"
                                     >
                                         <MessageCircle size={28} strokeWidth={1.5} className="shrink-0" />
@@ -547,13 +567,17 @@ export default function PublicGallery({ images, metadata }) {
                                         href="https://www.linkedin.com/in/sefi-riechkind-679b67136"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="flex items-center justify-center text-[#0077b5] hover:text-white hover:bg-[#0077b5] transition-all hover:scale-110 drop-shadow-md border-[2.5px] border-[#0077b5] rounded-lg p-1 w-12 h-12 mt-3"
+                                        className="flex items-center justify-center text-[#0077b5] hover:text-white hover:bg-[#0077b5] transition-all hover:scale-110 drop-shadow-md border-[2.5px] border-[#0077b5] rounded-lg p-1 w-12 h-12 mt-2"
                                         title="לינקדאין"
                                     >
                                         <Linkedin size={28} fill="currentColor" strokeWidth={1} className="shrink-0" />
                                     </a>
                                 </div>
                             </div>
+
+                            <p className="text-white/60 text-sm mt-4 italic font-medium px-4">
+                                אם יש לכם רעיון ליצירה, אל תהססו ליצור בעצמכם! עזרה תמיד תינתן... צרו קשר באישי.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -588,123 +612,127 @@ export default function PublicGallery({ images, metadata }) {
             </div>
 
             {/* ── Fullscreen Lightbox ────────────────────────────────────────── */}
-            {isFullscreen && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200"
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={onTouchEnd}
-                    onClick={() => setIsFullscreen(false)}
-                >
-                    <button
-                        className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[80] cursor-pointer shadow-md"
-                        onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
+            {
+                isFullscreen && (
+                    <div
+                        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm animate-in fade-in duration-200"
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                        onClick={() => setIsFullscreen(false)}
                     >
-                        <X size={28} />
-                    </button>
+                        <button
+                            className="absolute top-4 right-4 text-white bg-white/10 hover:bg-white/20 rounded-full p-3 transition-colors z-[80] cursor-pointer shadow-md"
+                            onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
+                        >
+                            <X size={28} />
+                        </button>
 
-                    {/* Tooltip on first visit */}
-                    {showTooltip && (
-                        <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-indigo-500/90 text-white px-5 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(99,102,241,0.6)] animate-in slide-in-from-top-4 fade-in z-[80] text-sm md:text-base pointer-events-none border border-white/20">
-                            ✨ ניתן לעבור בין התמונות עם החיצים או גלגלת העכבר
-                        </div>
-                    )}
-
-                    {/* Fullscreen Arrows */}
-                    <button
-                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                        disabled={currentIndex === displayImages.length - 1}
-                        className={`absolute top-1/2 -translate-y-1/2 right-4 md:right-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
-                    >
-                        <ChevronRight size={32} />
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                        disabled={currentIndex === 0}
-                        className={`absolute top-1/2 -translate-y-1/2 left-4 md:left-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
-                    >
-                        <ChevronLeft size={32} />
-                    </button>
-
-                    <div className="w-full h-full flex flex-col xl:flex-row items-center justify-center gap-6 p-6 md:p-12 relative">
-                        {/* Image Wrapper */}
-                        <div className={`relative flex flex-col items-center justify-center flex-1 max-w-[90vw] transition-all duration-300 ${showFullscreenInfo ? 'xl:max-w-[70vw]' : 'xl:max-w-[90vw]'}`}>
-                            <div className="relative group w-full h-full flex items-center justify-center">
-                                <img
-                                    src={`./images/${encodeURIComponent(currentFile)}`}
-                                    alt={fileMetadata?.title || 'תמונה'}
-                                    className="max-w-full max-h-[85vh] object-contain drop-shadow-[0_0_60px_rgba(0,0,0,0.9)] rounded-2xl cursor-zoom-out flex-shrink"
-                                    onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
-                                />
-
-                                {/* Floating Action Buttons when Hovering on Image */}
-                                {(fileMetadata?.title || fileMetadata?.explanation) && (
-                                    <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowFullscreenInfo(!showFullscreenInfo); }}
-                                            className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl border border-white/20 hover:bg-white/20 transition-all font-bold shadow-lg flex items-center gap-2"
-                                        >
-                                            {showFullscreenInfo ? 'הסתר פרטים' : 'הצג פרטים'}
-                                            <MessageCircle size={20} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Separate Panel for Info (No Overlap) */}
-                        {showFullscreenInfo && (fileMetadata?.title || fileMetadata?.explanation) && (
-                            <div className="w-full xl:w-[400px] xl:max-w-sm shrink-0 bg-black/70 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col gap-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-right-8 z-[70] max-h-[40vh] xl:max-h-[85vh] overflow-y-auto custom-scrollbar">
-                                {fileMetadata?.title && (
-                                    <h3 className="text-2xl sm:text-3xl font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-black leading-tight border-b border-white/10 pb-4">
-                                        {fileMetadata.title}
-                                    </h3>
-                                )}
-                                {fileMetadata?.explanation && (
-                                    <div className="text-white/90 text-sm sm:text-base leading-relaxed flex-1">
-                                        {fileMetadata.explanation.split('\n').map((paragraph, index) => (
-                                            <p key={index} className="mb-4 last:mb-0">
-                                                {paragraph}
-                                            </p>
-                                        ))}
-                                        <div className="mt-8 pt-4 border-t border-white/5 text-right w-full">
-                                            <span className="text-[10px] text-white/30 uppercase tracking-widest font-black">* טקסט זה נכתב על ידי AI ועלול להכיל אי דיוקים</span>
-                                        </div>
-                                    </div>
-                                )}
+                        {/* Tooltip on first visit */}
+                        {showTooltip && (
+                            <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-indigo-500/90 text-white px-5 py-2.5 rounded-full font-bold shadow-[0_0_20px_rgba(99,102,241,0.6)] animate-in slide-in-from-top-4 fade-in z-[80] text-sm md:text-base pointer-events-none border border-white/20">
+                                ✨ ניתן לעבור בין התמונות עם החיצים או גלגלת העכבר
                             </div>
                         )}
+
+                        {/* Fullscreen Arrows */}
+                        <button
+                            onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                            disabled={currentIndex === displayImages.length - 1}
+                            className={`absolute top-1/2 -translate-y-1/2 right-4 md:right-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
+                        >
+                            <ChevronRight size={32} />
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                            disabled={currentIndex === 0}
+                            className={`absolute top-1/2 -translate-y-1/2 left-4 md:left-8 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 transition-all cursor-pointer`}
+                        >
+                            <ChevronLeft size={32} />
+                        </button>
+
+                        <div className="w-full h-full flex flex-col xl:flex-row items-center justify-center gap-6 p-6 md:p-12 relative">
+                            {/* Image Wrapper */}
+                            <div className={`relative flex flex-col items-center justify-center flex-1 max-w-[90vw] transition-all duration-300 ${showFullscreenInfo ? 'xl:max-w-[70vw]' : 'xl:max-w-[90vw]'}`}>
+                                <div className="relative group w-full h-full flex items-center justify-center">
+                                    <img
+                                        src={`./images/${encodeURIComponent(currentFile)}`}
+                                        alt={fileMetadata?.title || 'תמונה'}
+                                        className="max-w-full max-h-[85vh] object-contain drop-shadow-[0_0_60px_rgba(0,0,0,0.9)] rounded-2xl cursor-zoom-out flex-shrink"
+                                        onClick={(e) => { e.stopPropagation(); setIsFullscreen(false); }}
+                                    />
+
+                                    {/* Floating Action Buttons when Hovering on Image */}
+                                    {(fileMetadata?.title || fileMetadata?.explanation) && (
+                                        <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setShowFullscreenInfo(!showFullscreenInfo); }}
+                                                className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl border border-white/20 hover:bg-white/20 transition-all font-bold shadow-lg flex items-center gap-2"
+                                            >
+                                                {showFullscreenInfo ? 'הסתר פרטים' : 'הצג פרטים'}
+                                                <MessageCircle size={20} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Separate Panel for Info (No Overlap) */}
+                            {showFullscreenInfo && (fileMetadata?.title || fileMetadata?.explanation) && (
+                                <div className="w-full xl:w-[400px] xl:max-w-sm shrink-0 bg-black/70 backdrop-blur-2xl border border-white/10 rounded-3xl p-6 sm:p-8 flex flex-col gap-6 shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-right-8 z-[70] max-h-[40vh] xl:max-h-[85vh] overflow-y-auto custom-scrollbar">
+                                    {fileMetadata?.title && (
+                                        <h3 className="text-2xl sm:text-3xl font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-black leading-tight border-b border-white/10 pb-4">
+                                            {fileMetadata.title}
+                                        </h3>
+                                    )}
+                                    {fileMetadata?.explanation && (
+                                        <div className="text-white/90 text-sm sm:text-base leading-relaxed flex-1">
+                                            {fileMetadata.explanation.split('\n').map((paragraph, index) => (
+                                                <p key={index} className="mb-4 last:mb-0">
+                                                    {paragraph}
+                                                </p>
+                                            ))}
+                                            <div className="mt-8 pt-4 border-t border-white/5 text-right w-full">
+                                                <span className="text-[10px] text-white/30 uppercase tracking-widest font-black">* טקסט זה נכתב על ידי AI ועלול להכיל אי דיוקים</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* ── Search Modal ─────────────────────────────────────────────────── */}
-            {isSearchOpen && (
-                <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20">
-                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} />
-                    <div className={`relative w-full max-w-2xl bg-slate-900 rounded-[2rem] border border-cyan-500/30 p-2 shadow-[0_0_50px_rgba(6,182,212,0.15)] animate-in fade-in slide-in-from-top-4`}>
-                        <div className="flex items-center bg-slate-800 rounded-[1.8rem] px-6 py-4">
-                            <Search size={24} className="text-cyan-400 mr-4" />
-                            <input
-                                type="text"
-                                autoFocus
-                                placeholder="חפש תמונה, כותרת, או נושא..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full bg-transparent text-white text-xl md:text-2xl font-bold placeholder-slate-500 focus:outline-none focus:ring-0 outline-none border-none pr-4"
-                            />
-                            <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} className="ml-2 text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 p-2 rounded-full transition-all shrink-0">
-                                <X size={24} />
-                            </button>
-                        </div>
-                        {searchQuery && (
-                            <div className="p-4 text-center text-cyan-200 mt-2 font-medium bg-slate-800/50 rounded-2xl border border-slate-800">
-                                נמצאו {filteredImages.length} תוצאות. לחץ על ה-X בתיבה לביטול חיפוש, או סגור את החלון לצפייה.
+            {
+                isSearchOpen && (
+                    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20">
+                        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} />
+                        <div className={`relative w-full max-w-2xl bg-slate-900 rounded-[2rem] border border-cyan-500/30 p-2 shadow-[0_0_50px_rgba(6,182,212,0.15)] animate-in fade-in slide-in-from-top-4`}>
+                            <div className="flex items-center bg-slate-800 rounded-[1.8rem] px-6 py-4">
+                                <Search size={24} className="text-cyan-400 mr-4" />
+                                <input
+                                    type="text"
+                                    autoFocus
+                                    placeholder="חפש תמונה, כותרת, או נושא..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-transparent text-white text-xl md:text-2xl font-bold placeholder-slate-500 focus:outline-none focus:ring-0 outline-none border-none pr-4"
+                                />
+                                <button onClick={() => { setIsSearchOpen(false); setSearchQuery(''); }} className="ml-2 text-slate-400 hover:text-white bg-slate-700/50 hover:bg-slate-700 p-2 rounded-full transition-all shrink-0">
+                                    <X size={24} />
+                                </button>
                             </div>
-                        )}
+                            {searchQuery && (
+                                <div className="p-4 text-center text-cyan-200 mt-2 font-medium bg-slate-800/50 rounded-2xl border border-slate-800">
+                                    נמצאו {filteredImages.length} תוצאות. לחץ על ה-X בתיבה לביטול חיפוש, או סגור את החלון לצפייה.
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
