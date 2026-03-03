@@ -204,7 +204,7 @@ export default function PublicGallery({ images, metadata }) {
             <div className="relative w-full max-w-[1400px] px-3 sm:px-4 mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-stretch justify-center">
 
                 {/* ── Left/Main: Search + Image Frame ── */}
-                <div className="w-full max-w-2xl md:max-w-4xl flex flex-col items-center flex-1 relative shrink-0 mx-auto">
+                <div className="w-full max-w-2xl md:max-w-4xl flex flex-col items-stretch flex-1 relative shrink-0 mx-auto min-h-0">
 
                     {/* Spacer since logo is gone */}
                     <div className="h-6" />
@@ -218,11 +218,11 @@ export default function PublicGallery({ images, metadata }) {
                         <div className="w-full relative shrink-0">
                             {/* Frame */}
                             <div
-                                className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full h-full flex flex-col`}
+                                className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full h-full flex flex-col min-h-0`}
                                 style={{ willChange: 'transform' }}
                             >
                                 {/* Inner card */}
-                                <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1`}>
+                                <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0`}>
 
                                     {/* Title Bar with inline Search and About */}
                                     <div className="px-4 sm:px-6 py-4 flex items-center justify-between relative flex-shrink-0 z-20 w-full min-h-[5rem]">
@@ -258,27 +258,26 @@ export default function PublicGallery({ images, metadata }) {
                                     </div>
 
                                     {/* Image + nav arrows wrapper (no overflow-hidden so arrows aren't clipped) */}
-                                    <div className="relative w-full"
+                                    <div className="relative w-full flex-1 flex flex-col min-h-0 aspect-square lg:aspect-auto"
                                         onTouchStart={onTouchStart}
                                         onTouchMove={onTouchMove}
                                         onTouchEnd={onTouchEnd}
                                     >
                                         {/* Image area — click to fullscreen */}
-                                        <div className={`relative flex items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in rounded-b-[1.8rem] sm:rounded-b-[2.2rem] flex-1`}
-                                            style={{ padding: '16px' }}
+                                        <div className={`relative flex items-center justify-center bg-black/40 w-full flex-1 overflow-hidden cursor-zoom-in rounded-b-[1.8rem] sm:rounded-b-[2.2rem] min-h-0`}
                                             onClick={() => setIsFullscreen(true)}>
 
                                             {/* Glow behind image */}
-                                            <div className={`absolute inset-0 bg-gradient-to-t ${theme.glowClass} to-transparent opacity-50 mix-blend-screen pointer-events-none`} />
+                                            <div className={`absolute inset-0 bg-gradient-to-t ${theme.glowClass} to-transparent opacity-50 mix-blend-screen pointer-events-none z-0`} />
 
-                                            <img
-                                                key={currentFile}
-                                                src={`./images/${encodeURIComponent(currentFile)}`}
-                                                alt={fileMetadata?.title || 'תמונה'}
-                                                className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] relative z-10 animate-in zoom-in-95 duration-500"
-                                                style={{ borderRadius: '12px' }}
-                                                loading="lazy"
-                                            />
+                                            <div className="absolute inset-0 p-4 sm:p-6 flex items-center justify-center z-10 pointer-events-none">
+                                                <img
+                                                    key={currentFile}
+                                                    src={`./images/${encodeURIComponent(currentFile)}`}
+                                                    alt={fileMetadata?.title || 'תמונה'}
+                                                    className="w-full h-full object-contain filter drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)] animate-in zoom-in-95 duration-500"
+                                                />
+                                            </div>
 
                                             {/* Topic badge */}
                                             {fileMetadata?.topic && (
