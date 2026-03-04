@@ -6,7 +6,7 @@ import sharp from 'sharp';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const IMAGES_DIR = path.resolve(__dirname, '../../תמונות מקור משחקי מילים');
+const IMAGES_DIR = path.resolve(__dirname, '../תמונות מקור');
 const DATA_FILE = path.resolve(__dirname, '../../data.json');
 const PUBLIC_DIR = path.resolve(__dirname, '../public');
 const PUBLIC_IMAGES_DIR = path.join(PUBLIC_DIR, 'images');
