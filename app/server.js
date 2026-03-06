@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const IMAGES_DIR = path.resolve(__dirname, '../תמונות מקור משחקי מילים');
+const IMAGES_DIR = path.resolve(__dirname, '../app/תמונות מקור');
 const DATA_FILE = path.resolve(__dirname, '../data.json');
 
 app.use('/images', express.static(IMAGES_DIR));

@@ -109,35 +109,47 @@ export default function PublicGallery({ images, metadata }) {
     };
 
     useEffect(() => {
-        // Sort tagged images first, untagged images after. Inside groups, sort by file timestamp (newest first).
-        const sorted = [...images].sort((a, b) => {
-            const aTagged = metadata[a]?.title && metadata[a]?.explanation;
-            const bTagged = metadata[b]?.title && metadata[b]?.explanation;
+        // Sort tagged images first, untagged images after. Inside groups, sort by file timestamp or random.
+        const tagged = [];
+        const untagged = [];
 
-            if (aTagged && !bTagged) return -1;
-            if (!aTagged && bTagged) return 1;
-
-            if (sortOrder === 'newest') {
-                const dateA = metadata[a]?.dateMillis || 0;
-                const dateB = metadata[b]?.dateMillis || 0;
-
-                if (dateA !== dateB) return dateB - dateA; // Newest first
-
-                // Fallback to older logic if dateMillis not present (i.e. user didn't run updated prepare script)
-                const extractDate = (filename) => {
-                    const match = filename.match(/_(\d{8})_(\d{6})_/);
-                    return match ? parseInt(match[1] + match[2], 10) : 0;
-                };
-                const fbA = extractDate(a);
-                const fbB = extractDate(b);
-                if (fbA && fbB) return fbB - fbA;
-                if (fbA) return -1;
-                if (fbB) return 1;
-            }
-
-            return Math.random() - 0.5; // Randomize the rest
+        images.forEach(img => {
+            const hasInfo = metadata[img]?.title || metadata[img]?.explanation;
+            if (hasInfo) tagged.push(img);
+            else untagged.push(img);
         });
 
+        const sortArray = (arr) => {
+            if (sortOrder === 'newest') {
+                return arr.sort((a, b) => {
+                    const dateA = metadata[a]?.dateMillis || 0;
+                    const dateB = metadata[b]?.dateMillis || 0;
+                    if (dateA !== dateB) return dateB - dateA; // Newest first
+
+                    // Fallback to older logic if dateMillis not present
+                    const extractDate = (filename) => {
+                        const match = filename.match(/_(\d{8})_(\d{6})_/);
+                        return match ? parseInt(match[1] + match[2], 10) : 0;
+                    };
+                    const fbA = extractDate(a);
+                    const fbB = extractDate(b);
+                    if (fbA && fbB) return fbB - fbA;
+                    if (fbA) return -1;
+                    if (fbB) return 1;
+                    return 0;
+                });
+            } else {
+                // Fisher-Yates Shuffle for Random to ensure stable grouping
+                const shuffled = [...arr];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+        };
+
+        const sorted = [...sortArray(tagged), ...sortArray(untagged)];
         setShuffledImages(sorted);
     }, [images, metadata, sortOrder]);
 
@@ -400,8 +412,13 @@ export default function PublicGallery({ images, metadata }) {
                                                                 className="w-full h-full object-contain filter drop-shadow-md rounded-xl transition-transform group-hover:scale-105"
                                                                 loading="lazy"
                                                             />
+                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl z-20 pointer-events-none">
+                                                                <span className="text-white font-bold text-sm lg:text-base border border-white/30 bg-black/40 px-4 py-2 rounded-full backdrop-blur-md shadow-lg drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                                                                    למצב מסך מלא לחץ
+                                                                </span>
+                                                            </div>
                                                             {metadata[file]?.title && (
-                                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent text-white text-xs sm:text-[13px] text-center pt-6 pb-2 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis px-2 font-bold z-20 pointer-events-none">
+                                                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent text-white text-xs sm:text-[13px] text-center pt-6 pb-2 rounded-b-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap overflow-hidden text-ellipsis px-2 font-bold z-30 pointer-events-none">
                                                                     {metadata[file].title}
                                                                 </div>
                                                             )}
@@ -414,14 +431,14 @@ export default function PublicGallery({ images, metadata }) {
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
                                                 disabled={currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1}
-                                                className={`absolute top-1/2 -translate-y-1/2 right-2 md:-right-6 z-30 bg-black/50 md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
+                                                className={`absolute top-1/2 -translate-y-1/2 right-2 md:right-4 xl:right-6 z-30 bg-black/50 md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
                                             >
                                                 <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
                                             </button>
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); prevImage(); }}
                                                 disabled={currentIndex === 0}
-                                                className={`absolute top-1/2 -translate-y-1/2 left-2 md:-left-6 z-30 bg-black/50 md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
+                                                className={`absolute top-1/2 -translate-y-1/2 left-2 md:left-4 xl:left-6 z-30 bg-black/50 md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
                                             >
                                                 <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-0.5 transition-transform" />
                                             </button>
@@ -493,7 +510,7 @@ export default function PublicGallery({ images, metadata }) {
                                                     }}
                                                 >
                                                     <span className="text-white/70 text-sm font-bold pointer-events-none">מיון:</span>
-                                                    <div className="relative flex items-center bg-transparent text-white text-sm font-medium pr-1 pl-6 hover:text-white/80 transition-colors z-10 w-[85px] justify-start">
+                                                    <div className="relative flex items-center bg-transparent text-white text-sm font-medium pr-1 pl-6 hover:text-white/80 transition-colors z-10 w-[100px] justify-start whitespace-nowrap">
                                                         <span>{sortOrder === 'newest' ? 'הכי חדשים' : 'אקראי'}</span>
                                                         <div className={`absolute left-1 text-white/50 text-[10px] transition-transform ${isSortOpen ? 'rotate-180' : ''}`}>▲</div>
 
@@ -705,62 +722,56 @@ export default function PublicGallery({ images, metadata }) {
 
                         <div className="w-full h-full flex flex-row-reverse items-center justify-center gap-6 p-6 md:p-12 relative pointer-events-none z-50">
 
-                            {/* Left Panel (Absolute overlay or fixed flex to avoid shrinking image) */}
-                            {showFullscreenInfo ? (
-                                <div className="hidden lg:flex absolute left-6 lg:left-12 top-1/2 -translate-y-1/2 w-[320px] xl:w-[380px] shrink-0 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex-col z-[75] max-h-[85vh] pointer-events-auto animate-in fade-in slide-in-from-left-8">
-                                    <div className="px-6 pt-6 pb-4 border-b border-white/10 flex items-center justify-between">
+                            {/* Always visible Title and Toggle Button */}
+                            <div className="hidden lg:flex absolute top-8 right-8 xl:top-10 xl:right-10 flex-row items-center gap-4 z-[80] pointer-events-auto">
+                                {fileMetadata?.title && (
+                                    <div className="bg-slate-900/80 backdrop-blur-xl px-6 py-3 rounded-2xl border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center transition-all hover:scale-105">
+                                        <h3 className={`text-2xl lg:text-3xl font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad} font-black drop-shadow-md`}>
+                                            {fileMetadata.title}
+                                        </h3>
+                                    </div>
+                                )}
+                                {fileMetadata?.explanation && (
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setShowFullscreenInfo(!showFullscreenInfo); }}
+                                        className={`flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all ${theme.headerBtnAboutCls} text-sm font-bold shadow-[0_0_20px_rgba(0,0,0,0.3)] hover:scale-105`}
+                                    >
+                                        <MessageCircle size={20} />
+                                        <span>{showFullscreenInfo ? 'הסתר הסבר' : 'הצג הסבר'}</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Left Panel - Explanation text only */}
+                            {showFullscreenInfo && fileMetadata?.explanation && (
+                                <div className="hidden lg:flex absolute left-4 lg:left-6 top-1/2 -translate-y-1/2 w-[240px] xl:w-[280px] shrink-0 bg-black/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex-col z-[75] max-h-[85vh] pointer-events-auto animate-in fade-in slide-in-from-left-8">
+                                    <div className="px-5 pt-5 pb-3 border-b border-white/10 flex items-center justify-between">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setShowFullscreenInfo(false); }}
-                                            className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors flex shrink-0 ml-3"
+                                            className="p-1.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors flex shrink-0"
                                             title="הסתר פרטים"
                                         >
-                                            <X size={20} />
+                                            <X size={18} />
                                         </button>
-                                        {fileMetadata?.title ? (
-                                            <h3 className="text-xl xl:text-2xl font-['Varela_Round',sans-serif] text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400 font-black leading-tight text-right flex-1 truncate ml-8">
-                                                {fileMetadata.title}
-                                            </h3>
-                                        ) : (
-                                            <span className="flex-1"></span>
-                                        )}
+                                        <div className={`text-transparent bg-clip-text bg-gradient-to-r ${theme.titleGrad} font-bold`}>פירוט היצירה</div>
                                     </div>
 
-                                    {fileMetadata?.explanation && (
-                                        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 text-right dir-rtl">
-                                            <div className="text-white/90 text-[15px] xl:text-base leading-relaxed">
-                                                {fileMetadata.explanation.split('\n').map((paragraph, index) => (
-                                                    <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
-                                                ))}
-                                            </div>
-                                            <div className="mt-6 pt-3 border-t border-white/10 text-white/40 text-[11px] font-medium">
-                                                * ההסבר נוסח ע"י בינה מלאכותית (AI) ועלול להכיל אי דיוקים.
-                                            </div>
+                                    <div className="p-5 overflow-y-auto custom-scrollbar flex-1 text-right dir-rtl">
+                                        <div className="text-white/90 text-sm xl:text-[15px] leading-relaxed font-medium">
+                                            {fileMetadata.explanation.split('\n').map((paragraph, index) => (
+                                                <p key={index} className="mb-4 last:mb-0">{paragraph}</p>
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
-                            ) : (
-                                /* When panel is hidden, show floating action button & title on the left */
-                                <div className="hidden lg:flex absolute top-12 left-12 flex-row items-center gap-4 z-[80] pointer-events-auto">
-                                    {(fileMetadata?.title || fileMetadata?.explanation) && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setShowFullscreenInfo(true); }}
-                                            className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-full backdrop-blur-md transition-colors border border-white/20 shadow-lg flex items-center gap-2 text-sm font-bold cursor-pointer"
-                                        >
-                                            <MessageCircle size={18} />
-                                            הצג פרטים
-                                        </button>
-                                    )}
-                                    {fileMetadata?.title && (
-                                        <div className="bg-black/50 backdrop-blur-md px-5 py-2.5 rounded-xl border border-white/10 shadow-lg text-white font-bold max-w-[250px] truncate text-right dir-rtl text-sm">
-                                            {fileMetadata.title}
+                                        <div className="mt-6 pt-3 border-t border-white/10 text-white/40 text-[11px] font-medium">
+                                            * ההסבר נוסח ע"י בינה מלאכותית (AI) ועלול להכיל אי דיוקים.
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             )}
 
                             {/* Center Column: Perfectly Centered Image (Uses all available space but respects absolute left pane) */}
                             <div className="flex-1 flex flex-col items-center justify-center h-full max-h-[95vh] pointer-events-auto">
-                                <div className="relative inline-flex items-center justify-center max-w-[70vw] lg:max-w-[50vw] xl:max-w-[60vw]">
+                                <div className="relative inline-flex items-center justify-center max-w-[70vw] lg:max-w-[55vw] xl:max-w-[65vw]">
                                     <img
                                         src={`./images/${encodeURIComponent(currentFile)}`}
                                         alt={fileMetadata?.title || 'תמונה'}
@@ -771,16 +782,16 @@ export default function PublicGallery({ images, metadata }) {
                                     <button
                                         onClick={(e) => { e.stopPropagation(); nextImage(); }}
                                         disabled={currentIndex === displayImages.length - 1}
-                                        className={`absolute top-1/2 -translate-y-1/2 -right-8 md:-right-16 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 hover:scale-110 transition-all cursor-pointer`}
+                                        className={`absolute top-1/2 -translate-y-1/2 -right-14 md:-right-20 xl:-right-24 z-[90] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 hover:scale-110 transition-all cursor-pointer group`}
                                     >
-                                        <ChevronRight size={28} />
+                                        <ChevronRight size={28} className="group-hover:translate-x-0.5 transition-transform" />
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); prevImage(); }}
                                         disabled={currentIndex === 0}
-                                        className={`absolute top-1/2 -translate-y-1/2 -left-8 md:-left-16 z-[70] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 hover:scale-110 transition-all cursor-pointer`}
+                                        className={`absolute top-1/2 -translate-y-1/2 -left-14 md:-left-20 xl:-left-24 z-[90] bg-black/50 text-white backdrop-blur-md p-3 md:p-4 rounded-full shadow-[0_0_16px_rgba(0,0,0,0.4)] disabled:opacity-0 disabled:pointer-events-none hover:bg-white/20 hover:scale-110 transition-all cursor-pointer group`}
                                     >
-                                        <ChevronLeft size={28} />
+                                        <ChevronLeft size={28} className="group-hover:-translate-x-0.5 transition-transform" />
                                     </button>
                                 </div>
                             </div>
