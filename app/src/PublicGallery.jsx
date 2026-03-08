@@ -343,21 +343,26 @@ export default function PublicGallery({ images, metadata }) {
                                 className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full flex-1 flex flex-col min-h-0`}
                                 style={{ willChange: 'transform' }}
                             >
-                                {/* Nav arrows — seamlessly integrated into the colorful outer boundary */}
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                                    disabled={currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1}
-                                    className={`absolute top-1/2 -translate-y-1/2 -right-4 sm:-right-[22px] z-50 bg-black md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
-                                >
-                                    <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 group-hover:translate-x-0.5 transition-transform" />
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                                    disabled={currentIndex === 0}
-                                    className={`absolute top-1/2 -translate-y-1/2 -left-4 sm:-left-[22px] z-50 bg-black md:${theme.navBtnCls} backdrop-blur-md p-2 sm:p-3 md:shadow-[0_0_16px_rgba(0,0,0,0.4)] rounded-full text-white md:text-purple-600 border border-white/10 md:border-purple-200 disabled:opacity-0 disabled:pointer-events-none hover:scale-110 hover:brightness-110 transition-all font-bold group`}
-                                >
-                                    <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 group-hover:-translate-x-0.5 transition-transform" />
-                                </button>
+                                {/* Nav arrows — seamlessly integrated into the colorful outer boundary with matching gradient border */}
+                                {/* Next Arrow Wrapper */}
+                                <div className={`absolute top-1/2 -translate-y-1/2 -right-9 sm:-right-[46px] md:-right-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                    >
+                                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:translate-x-[2px] transition-transform" />
+                                    </button>
+                                </div>
+
+                                {/* Prev Arrow Wrapper */}
+                                <div className={`absolute top-1/2 -translate-y-1/2 -left-9 sm:-left-[46px] md:-left-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                    >
+                                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-[2px] transition-transform" />
+                                    </button>
+                                </div>
 
                                 {/* Inner card */}
                                 <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0`}>
@@ -602,7 +607,7 @@ export default function PublicGallery({ images, metadata }) {
                         </div>
                     )}
 
-                    <div className="p-3 sm:p-4 md:p-5 flex flex-col items-center flex-1 h-full min-h-0 overflow-y-auto w-full no-scrollbar">
+                    <div className="p-3 sm:p-4 md:p-5 flex flex-col items-center justify-between flex-1 h-full min-h-0 overflow-y-auto w-full no-scrollbar">
                         {/* Hidden on mobile, shown on lg screens */}
                         <div className="hidden lg:flex flex-col items-center w-full">
                             <div className="flex justify-center mb-0 w-full shrink-0">
@@ -629,7 +634,7 @@ export default function PublicGallery({ images, metadata }) {
                         </div>
 
                         {/* Always visible logic (QR + Socials) */}
-                        <div className="flex flex-col gap-2.5 items-center text-slate-300 w-full shrink-0 mt-auto">
+                        <div className="flex flex-col gap-2.5 items-center text-slate-300 w-full shrink-0">
                             {/* QR Code + Socials Side by Side */}
                             <div className="flex flex-row justify-center items-center gap-4 xl:gap-5 bg-black/30 p-3 xl:p-4 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap">
 
