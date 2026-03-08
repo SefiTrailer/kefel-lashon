@@ -343,6 +343,26 @@ export default function PublicGallery({ images, metadata }) {
                                 className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full flex-1 flex flex-col min-h-0`}
                                 style={{ willChange: 'transform' }}
                             >
+                                {/* Nav arrows — on the outer gradient frame so top-1/2 = visual center of the border ring */}
+                                {/* Next Arrow Wrapper */}
+                                <div className={`absolute top-1/2 -translate-y-1/2 -right-9 sm:-right-[46px] md:-right-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                    >
+                                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:translate-x-[2px] transition-transform" />
+                                    </button>
+                                </div>
+
+                                {/* Prev Arrow Wrapper */}
+                                <div className={`absolute top-1/2 -translate-y-1/2 -left-9 sm:-left-[46px] md:-left-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                    >
+                                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-[2px] transition-transform" />
+                                    </button>
+                                </div>
 
                                 {/* Inner card */}
                                 <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0`}>
@@ -391,32 +411,12 @@ export default function PublicGallery({ images, metadata }) {
                                         </div>
                                     )}
 
-                                    {/* Image + nav arrows wrapper (no overflow-hidden so arrows aren't clipped) */}
+                                    {/* Image + touch wrapper */}
                                     <div className="relative w-full flex-1 flex flex-col min-h-0"
                                         onTouchStart={onTouchStart}
                                         onTouchMove={onTouchMove}
                                         onTouchEnd={onTouchEnd}
                                     >
-                                        {/* Nav arrows — centered on the image area, not the whole frame */}
-                                        {/* Next Arrow Wrapper */}
-                                        <div className={`absolute top-1/2 -translate-y-1/2 -right-9 sm:-right-[46px] md:-right-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                                                className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
-                                            >
-                                                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:translate-x-[2px] transition-transform" />
-                                            </button>
-                                        </div>
-
-                                        {/* Prev Arrow Wrapper */}
-                                        <div className={`absolute top-1/2 -translate-y-1/2 -left-9 sm:-left-[46px] md:-left-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                                                className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
-                                            >
-                                                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-[2px] transition-transform" />
-                                            </button>
-                                        </div>
                                         {/* Image area — click to fullscreen */}
                                         <div className={`relative flex-1 flex flex-col items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0 rounded-t-[1.8rem] sm:rounded-t-[2.2rem] ${viewMode !== 'single' ? 'rounded-b-none' : ''}`}
                                             style={{ padding: viewMode === 'single' ? '8px' : '0px' }}
@@ -584,7 +584,7 @@ export default function PublicGallery({ images, metadata }) {
                 </div>
 
                 {/* ── Right/Side: About Section ── */}
-                <div className="w-full lg:w-[380px] xl:w-[440px] shrink-0 mt-2 lg:mt-0 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl relative min-h-0">
+                <div className="w-full lg:w-[380px] xl:w-[440px] shrink-0 mt-2 lg:mt-0 flex flex-col bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-[2.5rem] shadow-2xl relative min-h-0 lg:self-stretch">
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none rounded-[2.5rem]" />
 
                     {/* Desktop Floating Explanation View */}
@@ -607,28 +607,28 @@ export default function PublicGallery({ images, metadata }) {
                         </div>
                     )}
 
-                    <div className="p-3 sm:p-4 md:p-6 flex flex-col items-center justify-between flex-1 h-full min-h-0 overflow-y-auto w-full no-scrollbar">
+                    <div className="p-4 sm:p-5 md:p-7 flex flex-col items-center justify-between flex-1 overflow-y-auto w-full no-scrollbar" style={{ height: '100%' }}>
                         {/* Hidden on mobile, shown on lg screens */}
-                        <div className="hidden lg:flex flex-col items-center w-full flex-1">
-                            <div className="flex justify-center mb-2 w-full shrink-0">
+                        <div className="hidden lg:flex flex-col items-center justify-evenly w-full flex-1 pb-4">
+                            <div className="flex justify-center w-full shrink-0">
                                 <img
                                     src="./logo.png"
                                     alt="כפלשון"
-                                    className="h-24 lg:h-[120px] xl:h-[140px] object-contain drop-shadow-[0_0_28px_rgba(236,72,153,0.6)] transition-transform hover:scale-105"
+                                    className="h-32 lg:h-[150px] xl:h-[170px] object-contain drop-shadow-[0_0_32px_rgba(236,72,153,0.7)] transition-transform hover:scale-105"
                                     style={{ transform: 'scaleX(1.15)' }}
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-2 sm:gap-3 items-center text-slate-300 w-full shrink-0 mb-3 mt-2">
-                                <div className="leading-relaxed text-center font-medium text-base lg:text-lg xl:text-xl">
-                                    ברוכים הבאים ל<strong className="text-white mx-1 xl:text-xl drop-shadow-md">'כפלשון'</strong>!
+                            <div className="flex flex-col gap-3 items-center text-slate-300 w-full shrink-0">
+                                <div className="leading-relaxed text-center font-medium text-lg lg:text-xl xl:text-2xl">
+                                    ברוכים הבאים ל<strong className="text-white mx-1 xl:text-2xl drop-shadow-md">'כפלשון'</strong>!
                                     <br />
                                     <span>
                                         <span className="mr-[3px]">{images.length}</span> איורים דיגיטליים ויצירות AI הממחישים ביטויים, כפל לשון ומשחקי מילים בעברית — להעלות חיוך ולחגוג את השפה.
                                     </span>
                                     <br />
-                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5 mt-2 text-lg xl:text-xl">הכל ביצירת מוחי הקודח... 😊</span>
-                                    <span className="text-indigo-300 font-bold block mt-1 text-base xl:text-lg">ספי רייכקינד</span>
+                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5 mt-2 text-xl xl:text-2xl">הכל ביצירת מוחי הקודח... 😊</span>
+                                    <span className="text-indigo-300 font-bold block mt-1 text-lg xl:text-xl">ספי רייכקינד</span>
                                 </div>
                             </div>
                         </div>
