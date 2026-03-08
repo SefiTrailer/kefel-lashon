@@ -343,26 +343,6 @@ export default function PublicGallery({ images, metadata }) {
                                 className={`relative bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] rounded-[2rem] sm:rounded-[2.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.55)] w-full flex-1 flex flex-col min-h-0`}
                                 style={{ willChange: 'transform' }}
                             >
-                                {/* Nav arrows — seamlessly integrated into the colorful outer boundary with matching gradient border */}
-                                {/* Next Arrow Wrapper */}
-                                <div className={`absolute top-1/2 -translate-y-1/2 -right-9 sm:-right-[46px] md:-right-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
-                                    >
-                                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:translate-x-[2px] transition-transform" />
-                                    </button>
-                                </div>
-
-                                {/* Prev Arrow Wrapper */}
-                                <div className={`absolute top-1/2 -translate-y-1/2 -left-9 sm:-left-[46px] md:-left-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                                        className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
-                                    >
-                                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-[2px] transition-transform" />
-                                    </button>
-                                </div>
 
                                 {/* Inner card */}
                                 <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0`}>
@@ -417,6 +397,26 @@ export default function PublicGallery({ images, metadata }) {
                                         onTouchMove={onTouchMove}
                                         onTouchEnd={onTouchEnd}
                                     >
+                                        {/* Nav arrows — centered on the image area, not the whole frame */}
+                                        {/* Next Arrow Wrapper */}
+                                        <div className={`absolute top-1/2 -translate-y-1/2 -right-9 sm:-right-[46px] md:-right-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                                className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                            >
+                                                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:translate-x-[2px] transition-transform" />
+                                            </button>
+                                        </div>
+
+                                        {/* Prev Arrow Wrapper */}
+                                        <div className={`absolute top-1/2 -translate-y-1/2 -left-9 sm:-left-[46px] md:-left-[48px] z-50 rounded-full bg-gradient-to-br ${theme.frameGrad} p-[3px] sm:p-1.5 md:p-[10px] shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all ${currentIndex === 0 ? 'opacity-0 pointer-events-none' : 'hover:scale-110 hover:brightness-110'}`}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                                className={`bg-black md:${theme.navBtnCls} rounded-full text-white md:text-purple-600 font-bold group flex items-center justify-center p-2 sm:p-3 border-none outline-none w-full h-full`}
+                                            >
+                                                <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-[2px] transition-transform" />
+                                            </button>
+                                        </div>
                                         {/* Image area — click to fullscreen */}
                                         <div className={`relative flex-1 flex flex-col items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0 rounded-t-[1.8rem] sm:rounded-t-[2.2rem] ${viewMode !== 'single' ? 'rounded-b-none' : ''}`}
                                             style={{ padding: viewMode === 'single' ? '8px' : '0px' }}
@@ -607,40 +607,40 @@ export default function PublicGallery({ images, metadata }) {
                         </div>
                     )}
 
-                    <div className="p-3 sm:p-4 md:p-5 flex flex-col items-center justify-between flex-1 h-full min-h-0 overflow-y-auto w-full no-scrollbar">
+                    <div className="p-3 sm:p-4 md:p-6 flex flex-col items-center justify-between flex-1 h-full min-h-0 overflow-y-auto w-full no-scrollbar">
                         {/* Hidden on mobile, shown on lg screens */}
-                        <div className="hidden lg:flex flex-col items-center w-full">
-                            <div className="flex justify-center mb-0 w-full shrink-0">
+                        <div className="hidden lg:flex flex-col items-center w-full flex-1">
+                            <div className="flex justify-center mb-2 w-full shrink-0">
                                 <img
                                     src="./logo.png"
                                     alt="כפלשון"
-                                    className="h-16 sm:h-20 lg:h-[88px] object-contain drop-shadow-[0_0_20px_rgba(236,72,153,0.5)] transition-transform hover:scale-105"
+                                    className="h-24 lg:h-[120px] xl:h-[140px] object-contain drop-shadow-[0_0_28px_rgba(236,72,153,0.6)] transition-transform hover:scale-105"
                                     style={{ transform: 'scaleX(1.15)' }}
                                 />
                             </div>
 
-                            <div className="flex flex-col gap-2 sm:gap-3 items-center text-slate-300 w-full shrink-0 mb-3 mt-1">
-                                <div className="leading-relaxed text-center font-medium text-sm lg:text-base">
-                                    ברוכים הבאים ל<strong className="text-white mx-1 xl:text-lg drop-shadow-md">'כפלשון'</strong>!
+                            <div className="flex flex-col gap-2 sm:gap-3 items-center text-slate-300 w-full shrink-0 mb-3 mt-2">
+                                <div className="leading-relaxed text-center font-medium text-base lg:text-lg xl:text-xl">
+                                    ברוכים הבאים ל<strong className="text-white mx-1 xl:text-xl drop-shadow-md">'כפלשון'</strong>!
                                     <br />
                                     <span>
                                         <span className="mr-[3px]">{images.length}</span> איורים דיגיטליים ויצירות AI הממחישים ביטויים, כפל לשון ומשחקי מילים בעברית — להעלות חיוך ולחגוג את השפה.
                                     </span>
                                     <br />
-                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5 mt-1 xl:text-lg">הכל ביצירת מוחי הקודח... 😊</span>
-                                    <span className="text-indigo-300 font-bold block mt-0.5 xl:text-base">ספי רייכקינד</span>
+                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5 mt-2 text-lg xl:text-xl">הכל ביצירת מוחי הקודח... 😊</span>
+                                    <span className="text-indigo-300 font-bold block mt-1 text-base xl:text-lg">ספי רייכקינד</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Always visible logic (QR + Socials) */}
-                        <div className="flex flex-col gap-2.5 items-center text-slate-300 w-full shrink-0">
+                        <div className="flex flex-col gap-3 items-center text-slate-300 w-full shrink-0">
                             {/* QR Code + Socials Side by Side */}
-                            <div className="flex flex-row justify-center items-center gap-4 xl:gap-5 bg-black/30 p-3 xl:p-4 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap">
+                            <div className="flex flex-row justify-center items-center gap-4 xl:gap-6 bg-black/30 p-4 xl:p-5 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap">
 
                                 {/* QR Image with Share action on click */}
                                 <div
-                                    className="w-[130px] h-[130px] xl:w-[140px] xl:h-[140px] relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
+                                    className="w-[160px] h-[160px] xl:w-[180px] xl:h-[180px] relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
                                     onClick={async () => {
                                         const url = window.location.href;
                                         try {
@@ -655,37 +655,37 @@ export default function PublicGallery({ images, metadata }) {
                                 >
                                     <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
                                     <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
-                                        <Share2 size={28} className="mb-2 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
-                                        <span className="text-[11px] font-bold text-center leading-tight tracking-wide px-2">לשיתוף האתר<br />לחץ כאן</span>
+                                        <Share2 size={32} className="mb-2 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
+                                        <span className="text-[13px] font-bold text-center leading-tight tracking-wide px-2">לשיתוף האתר<br />לחץ כאן</span>
                                     </div>
                                 </div>
 
                                 {/* Social buttons stacked vertically */}
-                                <div className="flex flex-col h-[130px] xl:h-[140px] justify-between shrink-0">
+                                <div className="flex flex-col h-[160px] xl:h-[180px] justify-between shrink-0">
                                     <a
                                         href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="group relative flex items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-xl p-1 w-14 h-[60px] xl:h-[65px]"
+                                        className="group relative flex items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-xl p-1 w-16 h-[74px] xl:h-[84px]"
                                         title="ערוץ"
                                     >
-                                        <MessageCircle size={28} strokeWidth={1.5} className="shrink-0 mb-3 xl:mb-4 transition-transform group-hover:-translate-y-1" />
-                                        <span className="absolute bottom-1 font-bold text-[#128C7E] group-hover:text-white text-[12px] transition-colors" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>ערוץ</span>
+                                        <MessageCircle size={32} strokeWidth={1.5} className="shrink-0 mb-4 transition-transform group-hover:-translate-y-1" />
+                                        <span className="absolute bottom-1 font-bold text-[#128C7E] group-hover:text-white text-[13px] transition-colors" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>ערוץ</span>
                                     </a>
                                     <a
                                         href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="group relative flex items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#25D366] rounded-xl p-1 w-14 h-[60px] xl:h-[65px]"
+                                        className="group relative flex items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#25D366] rounded-xl p-1 w-16 h-[74px] xl:h-[84px]"
                                         title="קבוצה"
                                     >
-                                        <MessageCircle size={28} strokeWidth={1.5} className="shrink-0 mb-3 xl:mb-4 transition-transform group-hover:-translate-y-1" />
-                                        <span className="absolute bottom-1 font-bold text-[#25D366] group-hover:text-white text-[12px] transition-colors" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>קבוצה</span>
+                                        <MessageCircle size={32} strokeWidth={1.5} className="shrink-0 mb-4 transition-transform group-hover:-translate-y-1" />
+                                        <span className="absolute bottom-1 font-bold text-[#25D366] group-hover:text-white text-[13px] transition-colors" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>קבוצה</span>
                                     </a>
                                 </div>
                             </div>
 
-                            <p className="text-white/60 text-[13px] mt-1.5 italic font-medium px-2 text-center leading-snug">
+                            <p className="text-white/60 text-sm mt-1 italic font-medium px-2 text-center leading-snug">
                                 אם יש לכם רעיון ליצירה, אל תהססו ליצור בעצמכם!<br />עזרה תמיד תינתן... צרו קשר באישי.
                             </p>
                         </div>
