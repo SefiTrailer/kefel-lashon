@@ -122,12 +122,26 @@ export default function PublicGallery({ images, metadata }) {
     const sidebarRef = useRef(null);
     const [sidebarH, setSidebarH] = useState(700);
     useEffect(() => {
-        if (!sidebarRef.current) return;
-        const ro = new ResizeObserver(([entry]) => {
-            setSidebarH(entry.contentRect.height);
-        });
-        ro.observe(sidebarRef.current);
-        return () => ro.disconnect();
+        const measure = () => {
+            if (sidebarRef.current) {
+                const h = sidebarRef.current.getBoundingClientRect().height;
+                if (h > 0) setSidebarH(h);
+            }
+        };
+        // Measure immediately, then again after layout settles
+        measure();
+        const raf = requestAnimationFrame(measure);
+        const t = setTimeout(measure, 300);
+        // Also measure on every window resize
+        window.addEventListener('resize', measure);
+        const ro = new ResizeObserver(measure);
+        if (sidebarRef.current) ro.observe(sidebarRef.current);
+        return () => {
+            cancelAnimationFrame(raf);
+            clearTimeout(t);
+            window.removeEventListener('resize', measure);
+            ro.disconnect();
+        };
     }, []);
 
     const theme = THEMES[themeIndex];
@@ -392,8 +406,8 @@ export default function PublicGallery({ images, metadata }) {
                                     </div>
                                 </button>
 
-                                {/* Inner card */}
-                                <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0`}>
+                                {/* Inner card — overflow-hidden clips all children to the card's rounded shape */}
+                                <div className={`${theme.innerBg} rounded-[1.8rem] sm:rounded-[2.2rem] flex flex-col flex-1 min-h-0 overflow-hidden`}>
 
                                     {/* Title Bar with inline Search and About - Completely hidden in Grid mode */}
                                     {viewMode === 'single' && (
@@ -445,8 +459,8 @@ export default function PublicGallery({ images, metadata }) {
                                         onTouchMove={onTouchMove}
                                         onTouchEnd={onTouchEnd}
                                     >
-                                        {/* Image area — click to fullscreen */}
-                                        <div className={`relative flex-1 flex flex-col items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0 rounded-t-[1.8rem] sm:rounded-t-[2.2rem] ${viewMode !== 'single' ? 'rounded-b-none' : ''}`}
+                                        {/* Image area — no rounded-t needed; inner card's overflow-hidden clips it */}
+                                        <div className={`relative flex-1 flex flex-col items-center justify-center bg-black/40 w-full overflow-hidden cursor-zoom-in min-h-0`}
                                             style={{ padding: viewMode === 'single' ? '8px' : '0px' }}
                                             onClick={() => viewMode === 'single' ? openFullscreen() : null}>
 
