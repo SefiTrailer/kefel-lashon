@@ -618,41 +618,66 @@ export default function PublicGallery({ images, metadata }) {
                                     </div>
 
                                     {/* ── Mobile-only bottom navigation bar ── */}
-                                    <div className="lg:hidden flex items-center justify-between gap-3 shrink-0 px-4 pt-3 pb-3 border-t border-white/10">
-                                        {/* Prev (Right in RTL = previous) */}
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                                            disabled={currentIndex === 0}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl
-                                                bg-gradient-to-br ${theme.frameGrad} opacity-90
-                                                shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all active:scale-95
-                                                disabled:opacity-20 disabled:pointer-events-none`}
-                                        >
-                                            <div className={`rounded-full ${theme.innerBg} p-1.5`}>
-                                                <ChevronRight className={`w-5 h-5 ${theme.textClass}`} />
-                                            </div>
-                                            <span className={`text-sm font-bold ${theme.textClass}`}>הקודם</span>
-                                        </button>
+                                    <div className="lg:hidden flex flex-col gap-2 shrink-0 px-4 pt-3 pb-3 border-t border-white/10">
 
-                                        {/* Counter */}
-                                        <span className="text-white/50 text-xs font-medium shrink-0 tabular-nums">
-                                            {currentIndex + 1} / {displayImages.length}
-                                        </span>
+                                        {/* Row 1: Prev / Counter / Next */}
+                                        <div className="flex items-center justify-between gap-3">
+                                            {/* Prev */}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                                                disabled={currentIndex === 0}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl
+                                                    bg-gradient-to-br ${theme.frameGrad} opacity-90
+                                                    shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all active:scale-95
+                                                    disabled:opacity-20 disabled:pointer-events-none`}
+                                            >
+                                                <div className={`rounded-full ${theme.innerBg} p-1.5`}>
+                                                    <ChevronRight className={`w-5 h-5 ${theme.textClass}`} />
+                                                </div>
+                                                <span className={`text-sm font-bold ${theme.textClass}`}>הקודם</span>
+                                            </button>
 
-                                        {/* Next (Left in RTL = next) */}
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                                            disabled={currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1}
-                                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl
-                                                bg-gradient-to-br ${theme.frameGrad} opacity-90
-                                                shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all active:scale-95
-                                                disabled:opacity-20 disabled:pointer-events-none`}
-                                        >
-                                            <span className={`text-sm font-bold ${theme.textClass}`}>הבא</span>
-                                            <div className={`rounded-full ${theme.innerBg} p-1.5`}>
-                                                <ChevronLeft className={`w-5 h-5 ${theme.textClass}`} />
+                                            {/* Counter */}
+                                            <span className="text-white/50 text-xs font-medium shrink-0 tabular-nums">
+                                                {currentIndex + 1} / {displayImages.length}
+                                            </span>
+
+                                            {/* Next */}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                                                disabled={currentIndex + getGridSize() >= displayImages.length && currentIndex !== displayImages.length - 1}
+                                                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-2xl
+                                                    bg-gradient-to-br ${theme.frameGrad} opacity-90
+                                                    shadow-[0_4px_15px_rgba(0,0,0,0.4)] transition-all active:scale-95
+                                                    disabled:opacity-20 disabled:pointer-events-none`}
+                                            >
+                                                <span className={`text-sm font-bold ${theme.textClass}`}>הבא</span>
+                                                <div className={`rounded-full ${theme.innerBg} p-1.5`}>
+                                                    <ChevronLeft className={`w-5 h-5 ${theme.textClass}`} />
+                                                </div>
+                                            </button>
+                                        </div>
+
+                                        {/* Row 2: Sort toggle */}
+                                        <div className="flex items-center gap-2 justify-center">
+                                            <span className="text-white/50 text-xs font-bold shrink-0">מיון:</span>
+                                            <div className="flex rounded-xl overflow-hidden border border-white/15 shrink-0">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setSortOrder('newest'); }}
+                                                    className={`px-3 py-1.5 text-xs font-bold transition-all ${sortOrder === 'newest' ? `bg-gradient-to-br ${theme.frameGrad} text-white` : 'text-white/50 hover:text-white bg-white/5'}`}
+                                                >
+                                                    הכי חדשים
+                                                </button>
+                                                <div className="w-px bg-white/15 shrink-0" />
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setSortOrder('random'); }}
+                                                    className={`px-3 py-1.5 text-xs font-bold transition-all ${sortOrder === 'random' ? `bg-gradient-to-br ${theme.frameGrad} text-white` : 'text-white/50 hover:text-white bg-white/5'}`}
+                                                >
+                                                    אקראי
+                                                </button>
                                             </div>
-                                        </button>
+                                        </div>
+
                                     </div>
 
                                 </div>
