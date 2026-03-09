@@ -121,12 +121,14 @@ export default function PublicGallery({ images, metadata }) {
     // Sidebar dynamic height measurement
     const sidebarRef = useRef(null);
     const [sidebarH, setSidebarH] = useState(700);
+    const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
     useEffect(() => {
         const measure = () => {
             if (sidebarRef.current) {
                 const h = sidebarRef.current.getBoundingClientRect().height;
                 if (h > 0) setSidebarH(h);
             }
+            setIsMobile(window.innerWidth < 1024);
         };
         // Measure immediately, then again after layout settles
         measure();
@@ -649,7 +651,8 @@ export default function PublicGallery({ images, metadata }) {
                         </div>
                     )}
 
-                    <div className="flex flex-col items-center justify-between flex-1 w-full no-scrollbar overflow-hidden" style={{ height: '100%', padding: `${sidebarH * 0.025}px ${sidebarH * 0.028}px` }}>
+                    <div className={`flex flex-col items-center justify-between flex-1 w-full overflow-y-auto lg:overflow-hidden no-scrollbar`}
+                        style={{ height: '100%', padding: isMobile ? '20px 16px' : `${sidebarH * 0.025}px ${sidebarH * 0.028}px` }}>
                         {/* Hidden on mobile, shown on lg screens */}
                         <div className="hidden lg:flex flex-col items-center justify-evenly w-full flex-1">
                             <div className="flex justify-center w-full shrink-0">
@@ -657,33 +660,34 @@ export default function PublicGallery({ images, metadata }) {
                                     src="./logo.png"
                                     alt="כפלשון"
                                     className="object-contain drop-shadow-[0_0_32px_rgba(236,72,153,0.7)] transition-transform hover:scale-105"
-                                    style={{ height: `${sidebarH * 0.2}px`, transform: 'scaleX(1.15)' }}
+                                    style={{ height: isMobile ? '80px' : `${sidebarH * 0.2}px`, transform: 'scaleX(1.15)' }}
                                 />
                             </div>
 
-                            <div className="flex flex-col items-center text-slate-300 w-full shrink-0" style={{ gap: `${sidebarH * 0.008}px` }}>
-                                <div className="leading-relaxed text-center font-medium" style={{ fontSize: `${sidebarH * 0.022}px` }}>
+                            <div className="flex flex-col items-center text-slate-300 w-full shrink-0" style={{ gap: isMobile ? '6px' : `${sidebarH * 0.008}px` }}>
+                                <div className="leading-relaxed text-center font-medium" style={{ fontSize: isMobile ? '15px' : `${sidebarH * 0.022}px` }}>
                                     ברוכים הבאים ל<strong className="text-white mx-1 drop-shadow-md">'כפלשון'</strong>!
                                     <br />
                                     <span>
                                         <span className="mr-[3px]">{images.length}</span> איורים דיגיטליים ויצירות AI הממחישים ביטויים, כפל לשון ומשחקי מילים בעברית — להעלות חיוך ולחגוג את השפה.
                                     </span>
                                     <br />
-                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5" style={{ marginTop: `${sidebarH * 0.01}px`, fontSize: `${sidebarH * 0.024}px` }}>הכל ביצירת מוחי הקודח... 😊</span>
-                                    <span className="text-indigo-300 font-bold block" style={{ marginTop: `${sidebarH * 0.005}px`, fontSize: `${sidebarH * 0.022}px` }}>ספי רייכקינד</span>
+                                    <span className="text-purple-400 font-semibold flex items-center justify-center gap-1.5" style={{ marginTop: isMobile ? '6px' : `${sidebarH * 0.01}px`, fontSize: isMobile ? '16px' : `${sidebarH * 0.024}px` }}>הכל ביצירת מוחי הקודח... 😊</span>
+                                    <span className="text-indigo-300 font-bold block" style={{ marginTop: isMobile ? '2px' : `${sidebarH * 0.005}px`, fontSize: isMobile ? '15px' : `${sidebarH * 0.022}px` }}>ספי רייכקינד</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Always visible logic (QR + Socials) */}
-                        <div className="flex flex-col items-center text-slate-300 w-full shrink-0" style={{ gap: `${sidebarH * 0.01}px` }}>
+                        {/* Always visible (QR + Socials) */}
+                        <div className="flex flex-col items-center text-slate-300 w-full shrink-0" style={{ gap: isMobile ? '12px' : `${sidebarH * 0.01}px` }}>
                             {/* QR Code + Socials Side by Side */}
-                            <div className="flex flex-row justify-center items-center bg-black/30 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap" style={{ gap: `${sidebarH * 0.02}px`, padding: `${sidebarH * 0.02}px` }}>
+                            <div className="flex flex-row justify-center items-center bg-black/30 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap"
+                                style={{ gap: isMobile ? '16px' : `${sidebarH * 0.02}px`, padding: isMobile ? '16px' : `${sidebarH * 0.02}px` }}>
 
                                 {/* QR Image with Share action on click */}
                                 <div
                                     className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
-                                    style={{ width: `${sidebarH * 0.22}px`, height: `${sidebarH * 0.22}px` }}
+                                    style={{ width: isMobile ? '100px' : `${sidebarH * 0.22}px`, height: isMobile ? '100px' : `${sidebarH * 0.22}px` }}
                                     onClick={async () => {
                                         const url = window.location.href;
                                         try {
@@ -704,33 +708,33 @@ export default function PublicGallery({ images, metadata }) {
                                 </div>
 
                                 {/* Social buttons stacked vertically */}
-                                <div className="flex flex-col justify-between shrink-0" style={{ height: `${sidebarH * 0.22}px` }}>
+                                <div className="flex flex-col justify-between shrink-0" style={{ height: isMobile ? '100px' : `${sidebarH * 0.22}px` }}>
                                     <a
                                         href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
                                         target="_blank"
                                         rel="noreferrer"
                                         className="group flex flex-col items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-xl"
-                                        style={{ width: `${sidebarH * 0.09}px`, height: `${sidebarH * 0.1}px`, gap: `${sidebarH * 0.005}px` }}
+                                        style={{ width: isMobile ? '48px' : `${sidebarH * 0.09}px`, height: isMobile ? '46px' : `${sidebarH * 0.1}px`, gap: isMobile ? '3px' : `${sidebarH * 0.005}px` }}
                                         title="ערוץ"
                                     >
-                                        <MessageCircle style={{ width: `${sidebarH * 0.042}px`, height: `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
-                                        <span className="font-bold text-[#128C7E] group-hover:text-white transition-colors" style={{ fontSize: `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>ערוץ</span>
+                                        <MessageCircle style={{ width: isMobile ? '22px' : `${sidebarH * 0.042}px`, height: isMobile ? '22px' : `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                        <span className="font-bold text-[#128C7E] group-hover:text-white transition-colors" style={{ fontSize: isMobile ? '11px' : `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>ערוץ</span>
                                     </a>
                                     <a
                                         href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
                                         target="_blank"
                                         rel="noreferrer"
                                         className="group flex flex-col items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#25D366] rounded-xl"
-                                        style={{ width: `${sidebarH * 0.09}px`, height: `${sidebarH * 0.1}px`, gap: `${sidebarH * 0.005}px` }}
+                                        style={{ width: isMobile ? '48px' : `${sidebarH * 0.09}px`, height: isMobile ? '46px' : `${sidebarH * 0.1}px`, gap: isMobile ? '3px' : `${sidebarH * 0.005}px` }}
                                         title="קבוצה"
                                     >
-                                        <MessageCircle style={{ width: `${sidebarH * 0.042}px`, height: `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
-                                        <span className="font-bold text-[#25D366] group-hover:text-white transition-colors" style={{ fontSize: `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>קבוצה</span>
+                                        <MessageCircle style={{ width: isMobile ? '22px' : `${sidebarH * 0.042}px`, height: isMobile ? '22px' : `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                        <span className="font-bold text-[#25D366] group-hover:text-white transition-colors" style={{ fontSize: isMobile ? '11px' : `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>קבוצה</span>
                                     </a>
                                 </div>
                             </div>
 
-                            <p className="text-white/60 italic font-medium px-2 text-center leading-snug" style={{ fontSize: `${sidebarH * 0.018}px`, marginTop: `${sidebarH * 0.005}px` }}>
+                            <p className="text-white/60 italic font-medium px-2 text-center leading-snug" style={{ fontSize: isMobile ? '12px' : `${sidebarH * 0.018}px`, marginTop: isMobile ? '4px' : `${sidebarH * 0.005}px` }}>
                                 אם יש לכם רעיון ליצירה, אל תהססו ליצור בעצמכם!<br />עזרה תמיד תינתן... צרו קשר באישי.
                             </p>
                         </div>
