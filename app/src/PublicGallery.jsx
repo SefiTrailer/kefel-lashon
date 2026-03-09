@@ -681,60 +681,108 @@ export default function PublicGallery({ images, metadata }) {
                         {/* Always visible (QR + Socials) */}
                         <div className="flex flex-col items-center text-slate-300 w-full shrink-0" style={{ gap: isMobile ? '12px' : `${sidebarH * 0.01}px` }}>
                             {/* QR Code + Socials Side by Side */}
-                            <div className="flex flex-row justify-center items-center bg-black/30 rounded-3xl border border-white/5 shadow-inner w-full flex-wrap sm:flex-nowrap"
-                                style={{ gap: isMobile ? '16px' : `${sidebarH * 0.02}px`, padding: isMobile ? '16px' : `${sidebarH * 0.02}px` }}>
+                            {isMobile ? (
+                                /* ── Mobile: full-width row ── */
+                                <div className="flex flex-row items-stretch gap-3 w-full px-1">
+                                    {/* QR — fills ~45% of row */}
+                                    <div
+                                        className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden flex-1 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.02] aspect-square"
+                                        onClick={async () => {
+                                            const url = window.location.href;
+                                            try {
+                                                if (navigator.share) {
+                                                    await navigator.share({ title: 'כפלשון', url: url });
+                                                } else {
+                                                    await navigator.clipboard.writeText(url);
+                                                    alert('הקישור הועתק הלוח!');
+                                                }
+                                            } catch (err) { }
+                                        }}
+                                    >
+                                        <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
+                                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
+                                            <Share2 size={28} className="mb-2 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
+                                            <span className="text-[11px] font-bold text-center leading-tight tracking-wide px-2">לשיתוף האתר<br />לחץ כאן</span>
+                                        </div>
+                                    </div>
 
-                                {/* QR Image with Share action on click */}
-                                <div
-                                    className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
-                                    style={{ width: isMobile ? '100px' : `${sidebarH * 0.22}px`, height: isMobile ? '100px' : `${sidebarH * 0.22}px` }}
-                                    onClick={async () => {
-                                        const url = window.location.href;
-                                        try {
-                                            if (navigator.share) {
-                                                await navigator.share({ title: 'כפלשון', url: url });
-                                            } else {
-                                                await navigator.clipboard.writeText(url);
-                                                alert('הקישור הועתק הלוח!');
-                                            }
-                                        } catch (err) { }
-                                    }}
-                                >
-                                    <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
-                                    <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
-                                        <Share2 size={28} className="mb-2 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
-                                        <span className="text-[11px] font-bold text-center leading-tight tracking-wide px-2">לשיתוף האתר<br />לחץ כאן</span>
+                                    {/* Social buttons — stack vertically, fill remaining space */}
+                                    <div className="flex flex-col gap-3 flex-1">
+                                        <a
+                                            href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
+                                            target="_blank" rel="noreferrer"
+                                            className="group flex flex-col items-center justify-center gap-2 flex-1 text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-[1.02] drop-shadow-md border-[2.5px] border-[#128C7E] rounded-2xl py-2"
+                                            title="ערוץ"
+                                        >
+                                            <MessageCircle size={28} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                            <span className="font-bold text-[#128C7E] group-hover:text-white transition-colors text-base" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>ערוץ</span>
+                                        </a>
+                                        <a
+                                            href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
+                                            target="_blank" rel="noreferrer"
+                                            className="group flex flex-col items-center justify-center gap-2 flex-1 text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-[1.02] drop-shadow-md border-[2.5px] border-[#25D366] rounded-2xl py-2"
+                                            title="קבוצה"
+                                        >
+                                            <MessageCircle size={28} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                            <span className="font-bold text-[#25D366] group-hover:text-white transition-colors text-base" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>קבוצה</span>
+                                        </a>
                                     </div>
                                 </div>
+                            ) : (
+                                /* ── Desktop: original sidebarH-proportional layout ── */
+                                <div className="flex flex-row justify-center items-center bg-black/30 rounded-3xl border border-white/5 shadow-inner w-full"
+                                    style={{ gap: `${sidebarH * 0.02}px`, padding: `${sidebarH * 0.02}px` }}>
 
-                                {/* Social buttons stacked vertically */}
-                                <div className="flex flex-col justify-between shrink-0" style={{ height: isMobile ? '100px' : `${sidebarH * 0.22}px` }}>
-                                    <a
-                                        href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="group flex flex-col items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-xl"
-                                        style={{ width: isMobile ? '48px' : `${sidebarH * 0.09}px`, height: isMobile ? '46px' : `${sidebarH * 0.1}px`, gap: isMobile ? '3px' : `${sidebarH * 0.005}px` }}
-                                        title="ערוץ"
+                                    {/* QR Image with Share action on click */}
+                                    <div
+                                        className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
+                                        style={{ width: `${sidebarH * 0.22}px`, height: `${sidebarH * 0.22}px` }}
+                                        onClick={async () => {
+                                            const url = window.location.href;
+                                            try {
+                                                if (navigator.share) {
+                                                    await navigator.share({ title: 'כפלשון', url: url });
+                                                } else {
+                                                    await navigator.clipboard.writeText(url);
+                                                    alert('הקישור הועתק הלוח!');
+                                                }
+                                            } catch (err) { }
+                                        }}
                                     >
-                                        <MessageCircle style={{ width: isMobile ? '22px' : `${sidebarH * 0.042}px`, height: isMobile ? '22px' : `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
-                                        <span className="font-bold text-[#128C7E] group-hover:text-white transition-colors" style={{ fontSize: isMobile ? '11px' : `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>ערוץ</span>
-                                    </a>
-                                    <a
-                                        href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="group flex flex-col items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#25D366] rounded-xl"
-                                        style={{ width: isMobile ? '48px' : `${sidebarH * 0.09}px`, height: isMobile ? '46px' : `${sidebarH * 0.1}px`, gap: isMobile ? '3px' : `${sidebarH * 0.005}px` }}
-                                        title="קבוצה"
-                                    >
-                                        <MessageCircle style={{ width: isMobile ? '22px' : `${sidebarH * 0.042}px`, height: isMobile ? '22px' : `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
-                                        <span className="font-bold text-[#25D366] group-hover:text-white transition-colors" style={{ fontSize: isMobile ? '11px' : `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>קבוצה</span>
-                                    </a>
+                                        <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
+                                        <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
+                                            <Share2 size={28} className="mb-2 text-pink-400 drop-shadow-[0_0_8px_rgba(236,72,153,0.8)] animate-pulse" />
+                                            <span className="text-[11px] font-bold text-center leading-tight tracking-wide px-2">לשיתוף האתר<br />לחץ כאן</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Social buttons stacked vertically */}
+                                    <div className="flex flex-col justify-between shrink-0" style={{ height: `${sidebarH * 0.22}px` }}>
+                                        <a
+                                            href="https://whatsapp.com/channel/0029VajNwaPL2AU0jdlgxa20"
+                                            target="_blank" rel="noreferrer"
+                                            className="group flex flex-col items-center justify-center text-[#128C7E] hover:text-white hover:bg-[#128C7E] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#128C7E] rounded-xl"
+                                            style={{ width: `${sidebarH * 0.09}px`, height: `${sidebarH * 0.1}px`, gap: `${sidebarH * 0.005}px` }}
+                                            title="ערוץ"
+                                        >
+                                            <MessageCircle style={{ width: `${sidebarH * 0.042}px`, height: `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                            <span className="font-bold text-[#128C7E] group-hover:text-white transition-colors" style={{ fontSize: `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>ערוץ</span>
+                                        </a>
+                                        <a
+                                            href="https://chat.whatsapp.com/LN6nwJ8cYiLHaj5uhTum9P"
+                                            target="_blank" rel="noreferrer"
+                                            className="group flex flex-col items-center justify-center text-[#25D366] hover:text-white hover:bg-[#25D366] transition-all hover:scale-105 drop-shadow-md border-[2.5px] border-[#25D366] rounded-xl"
+                                            style={{ width: `${sidebarH * 0.09}px`, height: `${sidebarH * 0.1}px`, gap: `${sidebarH * 0.005}px` }}
+                                            title="קבוצה"
+                                        >
+                                            <MessageCircle style={{ width: `${sidebarH * 0.042}px`, height: `${sidebarH * 0.042}px` }} strokeWidth={1.5} className="shrink-0 transition-transform group-hover:-translate-y-0.5" />
+                                            <span className="font-bold text-[#25D366] group-hover:text-white transition-colors" style={{ fontSize: `${sidebarH * 0.018}px`, textShadow: '0 1px 2px rgba(0,0,0,0.5)', lineHeight: 1 }}>קבוצה</span>
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            <p className="text-white/60 italic font-medium px-2 text-center leading-snug" style={{ fontSize: isMobile ? '12px' : `${sidebarH * 0.018}px`, marginTop: isMobile ? '4px' : `${sidebarH * 0.005}px` }}>
+                            <p className="text-white/60 italic font-medium px-2 text-center leading-snug" style={{ fontSize: isMobile ? '13px' : `${sidebarH * 0.018}px`, marginTop: isMobile ? '4px' : `${sidebarH * 0.005}px` }}>
                                 אם יש לכם רעיון ליצירה, אל תהססו ליצור בעצמכם!<br />עזרה תמיד תינתן... צרו קשר באישי.
                             </p>
                         </div>
