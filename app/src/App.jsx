@@ -36,17 +36,42 @@ function App() {
   const [publishResult, setPublishResult] = useState(null);
   const [lastCommit, setLastCommit] = useState(null);
 
+  // Detect public mode: either via env var (production build) or if not on localhost
+  const isPublicViewer = import.meta.env.VITE_PUBLIC_VIEWER === 'true' || 
+    (typeof window !== 'undefined' && 
+     window.location.hostname !== 'localhost' && 
+     window.location.hostname !== '127.0.0.1');
+
   const fetchImages = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/images`);
-      if (!res.ok) throw new Error('Failed to fetch images');
+      // In public viewer mode (on live site), fetch from static JSON file
+      // In admin mode (local), fetch from the backend API
+      const url = isPublicViewer ? './public-data.json' : `${API_BASE}/api/images`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Failed to fetch images from ${url}`);
       const data = await res.json();
+      
       setAllImages(data.files || []);
       setImages(data.files || []);
       setMetadata(data.data || {});
-      setFileSizes(data.fileStats || {});
-    } catch (err) {
-      setError(err.message);
+      setFileSizes(data.fileStats || {}); // Assuming fileStats is the correct property for fileSizes
+    } catch (e) {
+      console.error('Error fetching images:', e);
+      setError(e.message);
+    }
+  };
+
+  const fetchPublishStatus = async () => {
+    if (isPublicViewer) return; // No publishing status on live site
+    try {
+      const res = await fetch(`${API_BASE}/api/publish/status`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok) setLastCommit(data);
+      }
+    } catch (e) {
+      console.error('Error fetching publish status:', e);
+      // Non-critical, so no setError
     }
   };
 
@@ -97,15 +122,7 @@ function App() {
       .flatMap(m => m.topic.split(',').map(t => t.trim()))
   )).sort();
 
-  const fetchPublishStatus = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/publish/status`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.ok) setLastCommit(data);
-      }
-    } catch { /* non-critical */ }
-  };
+
 
   const handlePublish = async () => {
     setPublishState('loading');
@@ -174,7 +191,7 @@ function App() {
     }
   }, [currentIndex, images, metadata]);
 
-  const isPublicViewer = import.meta.env.VITE_PUBLIC_VIEWER === 'true';
+
 
   const handleSave = async (goToNext = false) => {
     if (images.length === 0) return;
