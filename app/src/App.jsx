@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronRight, ChevronLeft, Save, MessageCircle, CheckCircle, Trash2, Search, X, Upload, Github, Loader } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Save, MessageCircle, CheckCircle, Trash2, Search, X, Upload, Github, Loader, LayoutGrid, Image as ImageIcon } from 'lucide-react';
 import PublicGallery from './PublicGallery';
 
 const API_BASE = 'http://localhost:3088';
@@ -18,7 +18,7 @@ function formatBytes(bytes) {
 function App() {
   const [images, setImages] = useState([]);
   const [allImages, setAllImages] = useState([]);
-  const [filterAITagged, setFilterAITagged] = useState(false);
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'tagged' | 'untagged' | 'no-topic' | 'ai'
   const [metadata, setMetadata] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [title, setTitle] = useState('');
@@ -29,6 +29,7 @@ function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [fileSizes, setFileSizes] = useState({});
+  const [adminViewMode, setAdminViewMode] = useState('edit'); // 'edit' | 'grid'
 
   // ── Publish state ──
   const [publishState, setPublishState] = useState('idle'); // idle | loading | success | error | skipped
@@ -41,13 +42,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (filterAITagged) {
-      setImages(allImages.filter(img => metadata[img]?.isAIGenerated));
-    } else {
-      setImages(allImages);
+    let filtered = [...allImages];
+    if (filterMode === 'tagged') {
+      filtered = filtered.filter(img => metadata[img]?.title && metadata[img]?.explanation);
+    } else if (filterMode === 'untagged') {
+      filtered = filtered.filter(img => !metadata[img]?.title || !metadata[img]?.explanation);
+    } else if (filterMode === 'no-topic') {
+      filtered = filtered.filter(img => metadata[img]?.title && metadata[img]?.explanation && !metadata[img]?.topic);
+    } else if (filterMode === 'ai') {
+      filtered = filtered.filter(img => metadata[img]?.isAIGenerated);
     }
+    setImages(filtered);
     setCurrentIndex(0);
-  }, [filterAITagged, allImages]); // omitting metadata so it doesn't refilter while typing
+  }, [filterMode, allImages, metadata]);
 
   const fetchPublishStatus = async () => {
     try {
@@ -282,21 +289,39 @@ function App() {
           <div className="mt-4 md:mt-0 flex flex-col items-end gap-3">
             {/* Progress + Search row */}
             <div className="flex items-center gap-4">
-              <label
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-bold cursor-pointer transition-colors ${filterAITagged
-                    ? 'bg-indigo-100 border-indigo-200 text-indigo-800'
-                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                  }`}
-                title="הצג רק תמונות שתויגו זמנית ע״י ה-AI"
-              >
-                <input
-                  type="checkbox"
-                  checked={filterAITagged}
-                  onChange={(e) => setFilterAITagged(e.target.checked)}
-                  className="hidden"
-                />
-                🤖 רק AI
-              </label>
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 shadow-sm font-medium text-slate-600 text-sm">
+                <span className="text-xl px-1">🔎</span>
+                <select 
+                  value={filterMode} 
+                  onChange={(e) => setFilterMode(e.target.value)}
+                  className="bg-transparent border-none focus:ring-0 py-1.5 focus:outline-none text-slate-700 cursor-pointer"
+                  dir="rtl"
+                >
+                  <option value="all">הכל ({allImages.length})</option>
+                  <option value="tagged">רק מתויגות</option>
+                  <option value="untagged">חסר כותרת/הסבר</option>
+                  <option value="no-topic">חסר קטגוריה (Topic)</option>
+                  <option value="ai">🤖 תויגו רק ב-AI</option>
+                </select>
+              </div>
+
+              {/* View Mode Toggle */}
+              <div className="flex bg-slate-100 rounded-lg p-1">
+                <button
+                  onClick={() => setAdminViewMode('grid')}
+                  className={`p-1.5 rounded-md transition-all ${adminViewMode === 'grid' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="תצוגת גלריה"
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setAdminViewMode('edit')}
+                  className={`p-1.5 rounded-md transition-all ${adminViewMode === 'edit' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+                  title="תצוגת עריכה"
+                >
+                  <ImageIcon size={18} />
+                </button>
+              </div>
 
               <button
                 onClick={() => setIsSearchOpen(true)}
@@ -370,6 +395,7 @@ function App() {
         </header>
 
         {/* Main Content Area */}
+        {adminViewMode === 'edit' ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
           {/* Image Viewer Panel */}
@@ -516,6 +542,74 @@ function App() {
             </div>
           </div>
         </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {images.map((filename, index) => {
+              const data = metadata[filename];
+              const isTagged = data?.title && data?.explanation;
+              return (
+                <div 
+                  key={filename} 
+                  className="group relative bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-teal-300 transition-all cursor-pointer aspect-square"
+                  onClick={() => {
+                    setCurrentIndex(index);
+                    setAdminViewMode('edit');
+                  }}
+                >
+                  <img 
+                    src={`${API_BASE}/images/${encodeURIComponent(filename)}`} 
+                    alt={data?.title || filename}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                  
+                  {/* Overlay Grad */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/90 to-transparent p-3 pt-8 pb-3">
+                    <p className="text-white text-sm font-bold truncate text-right drop-shadow-md">
+                      {data?.title || <span className="text-slate-300 font-normal italic">ללא שם</span>}
+                    </p>
+                  </div>
+
+                  {/* Status Indicator */}
+                  <div className="absolute top-2 right-2">
+                    {isTagged ? (
+                      <div className="w-2.5 h-2.5 bg-teal-500 rounded-full shadow-[0_0_5px_rgba(20,184,166,0.8)]" title="מעודכן"></div>
+                    ) : (
+                      <div className="w-2.5 h-2.5 bg-slate-300 rounded-full shadow-[0_0_5px_rgba(203,213,225,0.8)]" title="חסר נתונים"></div>
+                    )}
+                  </div>
+
+                  {/* Delete Button Area (shows only on hover) */}
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`האם אתה בטוח שברצונך למחוק לצמיתות את "${filename}"?`)) {
+                        try {
+                          const res = await fetch(`${API_BASE}/api/images/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+                          if (res.ok) {
+                            setImages(prev => prev.filter(img => img !== filename));
+                            setAllImages(prev => prev.filter(img => img !== filename));
+                            setMetadata(prev => {
+                              const newData = { ...prev };
+                              delete newData[filename];
+                              return newData;
+                            });
+                          }
+                        } catch (err) {
+                           setError(err.message);
+                        }
+                      }
+                    }}
+                    className="absolute top-2 left-2 p-1.5 bg-rose-500 hover:bg-rose-600 text-white rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="מחק כליל תמונה זו"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Search Modal */}

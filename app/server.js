@@ -110,11 +110,17 @@ app.post('/api/metadata', (req, res) => {
 app.delete('/api/images/:filename', (req, res) => {
     try {
         const { filename } = req.params;
-        const filePath = path.join(IMAGES_DIR, filename);
+        const sourceFilePath = path.join(IMAGES_DIR, filename);
+        const publicFilePath = path.join(__dirname, '../app/public/images', filename);
 
-        // Delete the physical file if it exists
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        // Delete the physical file from תמונות מקור if it exists
+        if (fs.existsSync(sourceFilePath)) {
+            fs.unlinkSync(sourceFilePath);
+        }
+        
+        // Delete the physical file from public/images if it exists
+        if (fs.existsSync(publicFilePath)) {
+            fs.unlinkSync(publicFilePath);
         }
 
         // Remove from metadata

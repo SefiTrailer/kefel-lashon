@@ -476,11 +476,6 @@ export default function PublicGallery({ images, metadata }) {
                                                         style={{ borderRadius: '12px' }}
                                                         loading="lazy"
                                                     />
-                                                    {fileMetadata?.topic && (
-                                                        <div className={`absolute top-4 right-4 z-20 ${theme.topicBadgeCls} text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-lg border backdrop-blur-md -rotate-1`}>
-                                                            📌 {fileMetadata.topic}
-                                                        </div>
-                                                    )}
                                                 </>
                                             ) : (
                                                 <div className={`grid gap-2 sm:gap-4 p-2 w-full h-full relative z-10 items-center justify-items-center ${viewMode === 'grid-3x4' ? 'grid-cols-4 grid-rows-3' : 'grid-cols-3 grid-rows-2'}`}>
@@ -522,8 +517,13 @@ export default function PublicGallery({ images, metadata }) {
                                                     return tagsList.map(tag => (
                                                         <button
                                                             key={tag}
-                                                            onClick={(e) => { e.stopPropagation(); setSearchQuery(tag); }}
-                                                            className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-all hover:scale-105 border border-white/10 shadow-sm z-40 relative"
+                                                            onClick={(e) => { e.stopPropagation(); setSearchQuery(searchQuery === tag ? '' : tag); }}
+                                                            className={`px-3 py-1 rounded-full text-white text-sm font-bold transition-all hover:scale-105 shadow-sm z-40 relative border ${
+                                                                searchQuery === tag 
+                                                                    ? 'bg-emerald-500/80 hover:bg-emerald-400 border-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.5)]' 
+                                                                    : 'bg-white/10 hover:bg-white/20 border-white/10 font-medium'
+                                                            }`}
+                                                            title={searchQuery === tag ? "נקה סינון זה" : "לחץ כדי להציג את כל התמונות עם התיוג הזה"}
                                                         >
                                                             {tag}
                                                         </button>
