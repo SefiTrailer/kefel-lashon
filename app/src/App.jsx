@@ -273,7 +273,7 @@ function App() {
     );
   }
 
-  if (images.length === 0) {
+  if (allImages.length === 0) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="animate-pulse flex flex-col items-center">
@@ -438,11 +438,18 @@ function App() {
           <div className="flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
             {/* Image Container with precise aspect ratio matching */}
             <div className="relative w-full aspect-square bg-slate-100 flex items-center justify-center p-4">
-              <img
-                src={`${API_BASE}/images/${encodeURIComponent(currentFile)}`}
-                alt={title || currentFile}
-                className="w-full h-full object-contain drop-shadow-md rounded-lg"
-              />
+              {images.length > 0 ? (
+                <img
+                  src={`${API_BASE}/images/${encodeURIComponent(currentFile)}`}
+                  alt={title || currentFile}
+                  className="w-full h-full object-contain drop-shadow-md rounded-lg"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-slate-400 gap-3">
+                   <ImageIcon size={48} className="opacity-20" />
+                   <p className="font-medium">אין תמונות העונות לסינון זה</p>
+                </div>
+              )}
 
               {/* Status Badge */}
               {isCompleted && (
@@ -689,9 +696,11 @@ function App() {
               ) : (
                 Object.entries(metadata)
                   .filter(([filename, data]) => {
-                    if (!data.title) return false;
                     const query = searchQuery.toLowerCase();
-                    return data.title.toLowerCase().includes(query) || filename.toLowerCase().includes(query) || (data.explanation && data.explanation.toLowerCase().includes(query));
+                    const hasTitle = data.title && data.title.toLowerCase().includes(query);
+                    const hasFilename = filename.toLowerCase().includes(query);
+                    const hasExplanation = data.explanation && data.explanation.toLowerCase().includes(query);
+                    return hasTitle || hasFilename || hasExplanation;
                   })
                   .map(([filename, data]) => (
                     <button
