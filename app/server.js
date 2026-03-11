@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
+import multer from 'multer'; // Import multer
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,23 @@ app.use(express.json());
 
 const IMAGES_DIR = path.resolve(__dirname, '../app/תמונות מקור');
 const DATA_FILE = path.resolve(__dirname, '../data.json');
+const PUBLIC_DIR = path.resolve(__dirname, '../app/public/images'); // Define PUBLIC_DIR
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Automatically create destination directory if it doesn't exist
+        if (!fs.existsSync(IMAGES_DIR)){
+            fs.mkdirSync(IMAGES_DIR, { recursive: true });
+        }
+        cb(null, IMAGES_DIR);
+    },
+    filename: function (req, file, cb) {
+        // Keep original filename or sanitize it slightly
+        cb(null, file.originalname);
+    }
+});
+const upload = multer({ storage: storage });
 
 app.use('/images', express.static(IMAGES_DIR));
 
@@ -135,6 +153,53 @@ app.delete('/api/images/:filename', (req, res) => {
 
         res.json({ success: true });
     } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Upload endpoint
+app.post('/api/upload', upload.array('images'), (req, res) => {
+    try {
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded.' });
+        }
+
+        if (!fs.existsSync(PUBLIC_DIR)) {
+            fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+        }
+
+        let data = {};
+        if (fs.existsSync(DATA_FILE)) {
+            data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+        }
+
+        const uploadedFilenames = [];
+
+        req.files.forEach(file => {
+            const originalPath = file.path;
+            const publicPath = path.join(PUBLIC_DIR, file.filename);
+
+            // Copy to public directory
+            fs.copyFileSync(originalPath, publicPath);
+
+            // Initialize metadata if it doesn't exist
+            if (!data[file.filename]) {
+                data[file.filename] = {
+                    title: "",
+                    explanation: "",
+                    topic: "",
+                    isAIGenerated: false
+                };
+            }
+            uploadedFilenames.push(file.filename);
+        });
+
+        // Save updated metadata
+        fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+
+        res.json({ success: true, uploaded: uploadedFilenames });
+    } catch (e) {
+        console.error('Upload Error:', e);
         res.status(500).json({ error: e.message });
     }
 });

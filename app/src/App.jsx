@@ -36,6 +36,20 @@ function App() {
   const [publishResult, setPublishResult] = useState(null);
   const [lastCommit, setLastCommit] = useState(null);
 
+  const fetchImages = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/images`);
+      if (!res.ok) throw new Error('Failed to fetch images');
+      const data = await res.json();
+      setAllImages(data.files || []);
+      setImages(data.files || []);
+      setMetadata(data.data || {});
+      setFileSizes(data.fileStats || {});
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   useEffect(() => {
     fetchImages();
     fetchPublishStatus();
@@ -91,30 +105,35 @@ function App() {
     setTimeout(() => setPublishState('idle'), 8000);
   };
 
-  const fetchImages = async () => {
-    try {
-      const isPublic = import.meta.env.VITE_PUBLIC_VIEWER === 'true';
-      const endpoint = isPublic ? './public-data.json' : `${API_BASE}/api/images`;
-      const res = await fetch(endpoint);
-      if (!res.ok) throw new Error('Failed to fetch images');
-      const json = await res.json();
-      setImages(json.files || []);
-      setAllImages(json.files || []);
-      setMetadata(json.data || {});
-      setFileSizes(json.fileStats || {});
+  const handleUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-      // Load first image data if exists
-      if (json.files && json.files.length > 0) {
-        const firstFile = json.files[0];
-        const initialData = json.data[firstFile];
-        if (initialData) {
-          setTitle(initialData.title || '');
-          setExplanation(initialData.explanation || '');
-          setTopic(initialData.topic || '');
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        formData.append('images', files[i]);
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/api/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Upload failed: ${response.statusText}`);
         }
-      }
+
+        const result = await response.json();
+        if (result.success) {
+            // Refresh image list to include the newly uploaded files
+            await fetchImages();
+            // Optional: reset file input via its ref or event target
+            e.target.value = null;
+        }
     } catch (err) {
-      setError(err.message);
+        console.error('Upload Error:', err);
+        setError('שגיאה בהעלאת התמונות: ' + err.message);
     }
   };
 
@@ -322,7 +341,7 @@ function App() {
                   <ImageIcon size={18} />
                 </button>
               </div>
-
+              
               <button
                 onClick={() => setIsSearchOpen(true)}
                 className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
@@ -349,33 +368,50 @@ function App() {
 
             {/* ── Publish to GitHub button ── */}
             <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={handlePublish}
-                disabled={publishState === 'loading'}
-                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold shadow-sm border transition-all ${publishState === 'loading'
-                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-wait'
-                  : publishState === 'success'
-                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                    : publishState === 'error'
-                      ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                      : publishState === 'skipped'
-                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                        : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'
+              <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0">
+                {/* Upload Button */}
+                <label className="flex items-center gap-2 bg-indigo-50 border-2 border-indigo-200 text-indigo-700 px-5 py-2.5 rounded-xl font-bold hover:bg-indigo-100 hover:border-indigo-300 transition-all cursor-pointer shadow-sm ml-auto sm:ml-0 whitespace-nowrap">
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*"
+                    onChange={handleUpload} 
+                    className="hidden" 
+                  />
+                  <Upload size={18} />
+                  <span className="hidden sm:inline">העלה יצירות</span>
+                  <span className="sm:hidden">העלה</span>
+                </label>
+
+                {/* GitHub Publish Button */}
+                <button
+                  onClick={handlePublish}
+                  disabled={publishState === 'loading'}
+                  className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold shadow-sm border transition-all ${publishState === 'loading'
+                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-wait'
+                    : publishState === 'success'
+                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                      : publishState === 'error'
+                        ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        : publishState === 'skipped'
+                          ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                          : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'
                   }`}
-                title="פרסם שינויי תוכן (תמונות + data.json) לגיטהאב"
-              >
-                {publishState === 'loading' ? (
-                  <><Loader size={15} className="animate-spin" /> מפרסם...</>
-                ) : publishState === 'success' ? (
-                  <><CheckCircle size={15} /> פורסם! #{publishResult?.hash}</>
-                ) : publishState === 'error' ? (
-                  <><X size={15} /> שגיאה — נסה שוב</>
-                ) : publishState === 'skipped' ? (
-                  <><CheckCircle size={15} /> אין שינויים חדשים</>
-                ) : (
-                  <><Upload size={15} /> פרסם לגיטהאב</>
-                )}
-              </button>
+                  title="פרסם שינויי תוכן (תמונות + data.json) לגיטהאב"
+                >
+                  {publishState === 'loading' ? (
+                    <><Loader size={15} className="animate-spin" /> מפרסם...</>
+                  ) : publishState === 'success' ? (
+                    <><CheckCircle size={15} /> פורסם! #{publishResult?.hash}</>
+                  ) : publishState === 'error' ? (
+                    <><X size={15} /> שגיאה — נסה שוב</>
+                  ) : publishState === 'skipped' ? (
+                    <><CheckCircle size={15} /> אין שינויים חדשים</>
+                  ) : (
+                    <><Upload size={15} /> פרסם לגיטהאב</>
+                  )}
+                </button>
+              </div>
 
               {/* Last commit info */}
               {lastCommit && publishState === 'idle' && (
@@ -415,12 +451,6 @@ function App() {
                   <span>מעודכן</span>
                 </div>
               )}
-
-              {/* File Size Badge */}
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur text-slate-700 font-medium px-3 py-1.5 rounded-lg shadow-md border border-slate-200 text-sm flex items-center gap-2 tracking-wide" dir="ltr">
-                <span className="text-slate-400 text-xs uppercase font-bold tracking-wider">Size</span>
-                {fileSizes[currentFile] ? formatBytes(fileSizes[currentFile]) : '...'}
-              </div>
 
               {/* Image Counter */}
               <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-white text-sm font-medium px-4 py-1.5 rounded-full">
@@ -471,18 +501,25 @@ function App() {
                   <span>מחק תמונה</span>
                 </button>
               </h2>
+              {/* File Size Badge */}
+              <div className="flex items-center gap-2 text-sm font-mono text-slate-500 font-medium mb-4">
+                <span className="py-0.5 px-2 bg-slate-200/50 rounded-md shadow-sm border border-slate-300">
+                    {fileSizes[images[currentIndex]] ? formatBytes(fileSizes[images[currentIndex]]) : '...'}
+                </span>
+                
+                {metadata[images[currentIndex]]?.isAIGenerated && (
+                    <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-md border border-indigo-200 font-medium shadow-sm transition-all"
+                      title="הסבר זה נוצר על ידי בינה מלאכותית. שמירה ידנית תמחק תווית זו.">
+                      <span className="text-sm">🤖</span> AI Review
+                    </span>
+                )}
+            </div>
             </div>
 
-            <div className="flex flex-col gap-5 flex-1">
+            <div className="flex flex-col gap-5 flex-1 mt-1">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1 flex items-center justify-between">
                   <span>שם התמונה (המשחק מילים)</span>
-                  {metadata[images[currentIndex]]?.isAIGenerated && (
-                    <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full border border-indigo-200 font-medium tracking-wide shadow-sm"
-                      title="הסבר זה נוצר על ידי בינה מלאכותית. שמירה ידנית תמחק תווית זו.">
-                      <span className="text-sm">🤖</span> תויג ע״י AI
-                    </span>
-                  )}
                 </label>
                 <input
                   type="text"
@@ -702,8 +739,7 @@ function App() {
             </div>
           </div>
         </div>
-      )
-      }
+      )}
 
       {/* WhatsApp Floating CTA */}
       <a
@@ -718,7 +754,7 @@ function App() {
           יצירת קשר בווסטאפ
         </span>
       </a>
-    </div >
+    </div>
   );
 }
 
