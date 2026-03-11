@@ -42,15 +42,22 @@ for (const filename of publicImages) {
     publicFiles.push(filename);
 
     if (meta && meta.title && meta.explanation) {
-        const srcStat = (() => {
-            try { return fs.statSync(path.join(PUBLIC_IMAGES_DIR, filename)); }
-            catch { return null; }
-        })();
+        let dateMillis = meta.createdAt;
+        if (!dateMillis) {
+            const match = filename.match(/_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})_/);
+            if (match) {
+                const dateStr = match[1] + '-' + match[2] + '-' + match[3] + 'T' + match[4] + ':' + match[5] + ':' + match[6] + 'Z';
+                dateMillis = new Date(dateStr).getTime();
+            } else {
+                try { dateMillis = fs.statSync(path.join(PUBLIC_IMAGES_DIR, filename))?.mtimeMs || 0; }
+                catch { dateMillis = 0; }
+            }
+        }
         publicData[filename] = {
             ...meta,
-            dateMillis: srcStat?.mtimeMs ?? 0,
+            dateMillis
         };
-        fileStats[filename] = srcStat?.size ?? 0;
+        try { fileStats[filename] = fs.statSync(path.join(PUBLIC_IMAGES_DIR, filename)).size; } catch { fileStats[filename] = 0; }
     }
 }
 

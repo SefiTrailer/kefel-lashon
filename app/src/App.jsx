@@ -17,6 +17,8 @@ function formatBytes(bytes) {
 
 function App() {
   const [images, setImages] = useState([]);
+  const [allImages, setAllImages] = useState([]);
+  const [filterAITagged, setFilterAITagged] = useState(false);
   const [metadata, setMetadata] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [title, setTitle] = useState('');
@@ -37,6 +39,15 @@ function App() {
     fetchImages();
     fetchPublishStatus();
   }, []);
+
+  useEffect(() => {
+    if (filterAITagged) {
+      setImages(allImages.filter(img => metadata[img]?.isAIGenerated));
+    } else {
+      setImages(allImages);
+    }
+    setCurrentIndex(0);
+  }, [filterAITagged, allImages]); // omitting metadata so it doesn't refilter while typing
 
   const fetchPublishStatus = async () => {
     try {
@@ -81,6 +92,7 @@ function App() {
       if (!res.ok) throw new Error('Failed to fetch images');
       const json = await res.json();
       setImages(json.files || []);
+      setAllImages(json.files || []);
       setMetadata(json.data || {});
       setFileSizes(json.fileStats || {});
 
@@ -148,6 +160,12 @@ function App() {
           newImages[currentIndex] = newFilename;
           return newImages;
         });
+        setAllImages(prev => {
+          const newAll = [...prev];
+          const idx = newAll.indexOf(currentFile);
+          if (idx !== -1) newAll[idx] = newFilename;
+          return newAll;
+        });
         setFileSizes(prev => {
           const newSizes = { ...prev };
           if (newSizes[currentFile] !== undefined) {
@@ -183,6 +201,7 @@ function App() {
 
         // Remove from local state
         setImages(prev => prev.filter((_, idx) => idx !== currentIndex));
+        setAllImages(prev => prev.filter(img => img !== currentFile));
         setMetadata(prev => {
           const newData = { ...prev };
           delete newData[currentFile];
@@ -241,7 +260,7 @@ function App() {
 
   const currentFile = images[currentIndex];
   const isCompleted = metadata[currentFile]?.title && metadata[currentFile]?.explanation;
-  const progressPercentage = (Object.keys(metadata).length / images.length) * 100;
+  const progressPercentage = allImages.length ? (Object.keys(metadata).length / allImages.length) * 100 : 0;
 
   if (isPublicViewer) {
     return <PublicGallery images={images} metadata={metadata} />;
@@ -263,6 +282,22 @@ function App() {
           <div className="mt-4 md:mt-0 flex flex-col items-end gap-3">
             {/* Progress + Search row */}
             <div className="flex items-center gap-4">
+              <label
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-bold cursor-pointer transition-colors ${filterAITagged
+                    ? 'bg-indigo-100 border-indigo-200 text-indigo-800'
+                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                  }`}
+                title="הצג רק תמונות שתויגו זמנית ע״י ה-AI"
+              >
+                <input
+                  type="checkbox"
+                  checked={filterAITagged}
+                  onChange={(e) => setFilterAITagged(e.target.checked)}
+                  className="hidden"
+                />
+                🤖 רק AI
+              </label>
+
               <button
                 onClick={() => setIsSearchOpen(true)}
                 className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
@@ -274,7 +309,7 @@ function App() {
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
                 <span>{Math.round(progressPercentage)}% הושלמו</span>
                 <span className="bg-teal-100 text-teal-800 py-1 px-3 rounded-full">
-                  {Object.keys(metadata).length} / {images.length}
+                  {Object.keys(metadata).length} / {allImages.length}
                 </span>
               </div>
             </div>
@@ -293,14 +328,14 @@ function App() {
                 onClick={handlePublish}
                 disabled={publishState === 'loading'}
                 className={`flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold shadow-sm border transition-all ${publishState === 'loading'
-                    ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-wait'
-                    : publishState === 'success'
-                      ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
-                      : publishState === 'error'
-                        ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
-                        : publishState === 'skipped'
-                          ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                          : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-wait'
+                  : publishState === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                    : publishState === 'error'
+                      ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                      : publishState === 'skipped'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                        : 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700'
                   }`}
                 title="פרסם שינויי תוכן (תמונות + data.json) לגיטהאב"
               >
@@ -414,7 +449,15 @@ function App() {
 
             <div className="flex flex-col gap-5 flex-1">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">שם התמונה (המשחק מילים)</label>
+                <label className="text-sm font-bold text-slate-700 ml-1 flex items-center justify-between">
+                  <span>שם התמונה (המשחק מילים)</span>
+                  {metadata[images[currentIndex]]?.isAIGenerated && (
+                    <span className="flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs px-3 py-1 rounded-full border border-indigo-200 font-medium tracking-wide shadow-sm"
+                      title="הסבר זה נוצר על ידי בינה מלאכותית. שמירה ידנית תמחק תווית זו.">
+                      <span className="text-sm">🤖</span> תויג ע״י AI
+                    </span>
+                  )}
+                </label>
                 <input
                   type="text"
                   value={title}
