@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ChevronRight, ChevronLeft, Save, MessageCircle, CheckCircle, Trash2, Search, X, Upload, Github, Loader, LayoutGrid, Image as ImageIcon } from 'lucide-react';
 import PublicGallery from './PublicGallery';
 
@@ -50,25 +50,52 @@ function App() {
     }
   };
 
+  const [selectedTopic, setSelectedTopic] = useState(null);
+
   useEffect(() => {
     fetchImages();
     fetchPublishStatus();
   }, []);
 
+  const filteredImages = useMemo(() => {
+    return (allImages || []).filter(img => {
+      const meta = metadata[img] || {};
+      
+      // 1. Filter Mode
+      if (filterMode === 'tagged' && (!meta.title || !meta.explanation)) return false;
+      if (filterMode === 'untagged' && meta.title && meta.explanation) return false;
+      if (filterMode === 'no-topic' && (meta.topic || !meta.title || !meta.explanation)) return false;
+      if (filterMode === 'ai' && !meta.isAIGenerated) return false;
+
+      // 2. Topic Filter
+      if (selectedTopic && (!meta.topic || !meta.topic.includes(selectedTopic))) return false;
+
+      // 3. Search Query
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = meta.title?.toLowerCase().includes(q);
+        const matchFilename = img.toLowerCase().includes(q);
+        const matchExplanation = meta.explanation?.toLowerCase().includes(q);
+        const matchTopic = meta.topic?.toLowerCase().includes(q);
+        if (!matchTitle && !matchFilename && !matchExplanation && !matchTopic) return false;
+      }
+
+      return true;
+    });
+  }, [filterMode, selectedTopic, searchQuery, allImages, metadata]);
+
+  // Sync images state with filtered results
   useEffect(() => {
-    let filtered = [...allImages];
-    if (filterMode === 'tagged') {
-      filtered = filtered.filter(img => metadata[img]?.title && metadata[img]?.explanation);
-    } else if (filterMode === 'untagged') {
-      filtered = filtered.filter(img => !metadata[img]?.title || !metadata[img]?.explanation);
-    } else if (filterMode === 'no-topic') {
-      filtered = filtered.filter(img => metadata[img]?.title && metadata[img]?.explanation && !metadata[img]?.topic);
-    } else if (filterMode === 'ai') {
-      filtered = filtered.filter(img => metadata[img]?.isAIGenerated);
-    }
-    setImages(filtered);
+    setImages(filteredImages);
     setCurrentIndex(0);
-  }, [filterMode, allImages, metadata]);
+  }, [filteredImages]);
+
+  // Derived unique topics list
+  const allTopics = Array.from(new Set(
+    Object.values(metadata)
+      .filter(m => m.topic)
+      .flatMap(m => m.topic.split(',').map(t => t.trim()))
+  )).sort();
 
   const fetchPublishStatus = async () => {
     try {
@@ -307,16 +334,28 @@ function App() {
 
           <div className="mt-4 md:mt-0 flex flex-col items-end gap-3">
             {/* Progress + Search row */}
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              {/* Main Search Input */}
+              <div className="relative group min-w-[200px]">
+                <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
+                <input 
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="חיפוש חופשי..."
+                  className="w-full pr-10 pl-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 outline-none transition-all"
+                  dir="rtl"
+                />
+              </div>
+
               <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-2 shadow-sm font-medium text-slate-600 text-sm">
-                <span className="text-xl px-1">🔎</span>
                 <select 
                   value={filterMode} 
                   onChange={(e) => setFilterMode(e.target.value)}
                   className="bg-transparent border-none focus:ring-0 py-1.5 focus:outline-none text-slate-700 cursor-pointer"
                   dir="rtl"
                 >
-                  <option value="all">הכל ({allImages.length})</option>
+                  <option value="all">כל התמונות ({allImages.length})</option>
                   <option value="tagged">רק מתויגות</option>
                   <option value="untagged">חסר כותרת/הסבר</option>
                   <option value="no-topic">חסר קטגוריה (Topic)</option>
@@ -342,28 +381,33 @@ function App() {
                 </button>
               </div>
               
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="flex items-center gap-2 px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
-                title="חפש במאגר התמונות שאושרו"
-              >
-                <Search size={16} />
-                <span>חיפוש במאגר</span>
-              </button>
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-600">
-                <span>{Math.round(progressPercentage)}% הושלמו</span>
                 <span className="bg-teal-100 text-teal-800 py-1 px-3 rounded-full">
                   {Object.keys(metadata).length} / {allImages.length}
                 </span>
               </div>
+
+              {/* Progress bar */}
+              <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
             </div>
 
-            {/* Progress bar */}
-            <div className="w-48 h-2.5 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-teal-400 to-teal-600 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${progressPercentage}%` }}
-              />
+            {/* Topics Row */}
+            <div className="flex flex-wrap justify-end gap-2 mt-2 max-w-2xl overflow-hidden">
+               {allTopics.slice(0, 15).map(t => (
+                 <button
+                   key={t}
+                   onClick={() => setSelectedTopic(selectedTopic === t ? null : t)}
+                   className={`text-[10px] px-2 py-0.5 rounded-full border transition-all ${selectedTopic === t ? 'bg-teal-600 border-teal-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-500 hover:border-teal-200 hover:text-teal-600'}`}
+                 >
+                   {t}
+                 </button>
+               ))}
+               {allTopics.length > 15 && <span className="text-[10px] text-slate-300">...</span>}
             </div>
 
             {/* ── Publish to GitHub button ── */}
@@ -706,12 +750,27 @@ function App() {
                     <button
                       key={filename}
                       onClick={() => {
-                        const idx = images.indexOf(filename);
-                        if (idx !== -1) {
-                          setCurrentIndex(idx);
-                          setIsSearchOpen(false);
+                        const idxInFiltered = images.indexOf(filename);
+                        if (idxInFiltered !== -1) {
+                          setCurrentIndex(idxInFiltered);
+                        } else {
+                          // Crucial Fix: If not in current filtered list, reset filters
+                          setFilterMode('all');
+                          setSelectedTopic(null);
                           setSearchQuery('');
+                          // Wait for next tick/render if needed, or rely on effect.
+                          // But we can find index in allImages immediately.
+                          const idxInAll = allImages.indexOf(filename);
+                          if (idxInAll !== -1) {
+                             setTimeout(() => {
+                               setImages(allImages);
+                               setCurrentIndex(idxInAll);
+                             }, 0);
+                          }
                         }
+                        setIsSearchOpen(false);
+                        setSearchQuery('');
+                        setAdminViewMode('edit');
                       }}
                       className="w-full text-right p-4 rounded-2xl bg-white border border-slate-100 shadow-sm hover:border-teal-300 hover:shadow-md transition-all flex gap-4 items-center group"
                     >
