@@ -24,6 +24,7 @@ function App() {
   const [title, setTitle] = useState('');
   const [explanation, setExplanation] = useState('');
   const [topic, setTopic] = useState('');
+  const [isApproved, setIsApproved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -101,6 +102,8 @@ function App() {
       if (filterMode === 'no-explanation' && meta.explanation) return false;
       if (filterMode === 'no-topic' && meta.topic) return false;
       if (filterMode === 'ai' && meta.isAIGenerated !== true) return false;
+      if (filterMode === 'approved' && meta.isApproved !== true) return false;
+      if (filterMode === 'not-approved' && meta.isApproved === true) return false;
 
       // 2. Topic Filter
       if (selectedTopic && (!meta.topic || !meta.topic.includes(selectedTopic))) return false;
@@ -200,6 +203,7 @@ function App() {
       setTitle(data?.title || '');
       setExplanation(data?.explanation || '');
       setTopic(data?.topic || '');
+      setIsApproved(data?.isApproved || false);
     }
   }, [currentIndex, images, metadata]);
 
@@ -218,7 +222,8 @@ function App() {
           filename: currentFile,
           title,
           explanation,
-          topic
+          topic,
+          isApproved
         })
       });
 
@@ -232,7 +237,13 @@ function App() {
         if (newFilename !== currentFile && newData[currentFile]) {
           delete newData[currentFile];
         }
-        newData[newFilename] = { title, explanation, topic };
+        newData[newFilename] = { 
+          title, 
+          explanation, 
+          topic, 
+          isApproved, 
+          isAIGenerated: metadata[currentFile]?.isAIGenerated 
+        };
         return newData;
       });
 
@@ -390,6 +401,8 @@ function App() {
                   <option value="no-explanation">ללא הסבר</option>
                   <option value="no-topic">ללא נושא (Topic)</option>
                   <option value="ai">🤖 תויגו רק ב-AI</option>
+                  <option value="approved">✅ עברו בקרה / מאושרות</option>
+                  <option value="not-approved">⏳ לא עברו בקרה / ממתינות</option>
                 </select>
               </div>
 
@@ -636,6 +649,26 @@ function App() {
               </div>
             </div>
 
+            <div className="flex items-center gap-3 mt-4 px-2">
+              <label className="relative flex cursor-pointer items-center rounded-full p-2" htmlFor="checkbox">
+                <input
+                  type="checkbox"
+                  id="checkbox"
+                  checked={isApproved}
+                  onChange={(e) => setIsApproved(e.target.checked)}
+                  className="peer relative h-6 w-6 cursor-pointer appearance-none rounded-md border border-slate-300 transition-all before:absolute before:top-2/4 before:left-2/4 before:block before:h-12 before:w-12 before:-translate-y-2/4 before:-translate-x-2/4 before:rounded-full before:bg-teal-500 before:opacity-0 before:transition-opacity checked:border-teal-500 checked:bg-teal-500 checked:before:bg-teal-500 hover:before:opacity-10"
+                />
+                <span className="pointer-events-none absolute top-2/4 left-2/4 -translate-y-2/4 -translate-x-2/4 text-white opacity-0 transition-opacity peer-checked:opacity-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                  </svg>
+                </span>
+              </label>
+              <label className="cursor-pointer text-slate-700 font-bold select-none text-lg" htmlFor="checkbox">
+                תמונה מאושרת / עברה בקרה
+              </label>
+            </div>
+
             <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3 mt-2 shrink-0">
               <button
                 onClick={() => handleSave(true)}
@@ -690,11 +723,14 @@ function App() {
                     </div>
 
                     {/* Status Indicator */}
-                    <div className="absolute top-2 right-2">
+                    <div className="absolute top-2 right-2 flex flex-col gap-1.5 items-center">
                       {isTagged ? (
-                        <div className="w-2.5 h-2.5 bg-teal-500 rounded-full shadow-[0_0_5px_rgba(20,184,166,0.8)]" title="מעודכן"></div>
+                        <div className="w-2.5 h-2.5 bg-teal-500 rounded-full shadow-[0_0_5px_rgba(20,184,166,0.8)]" title="מעודכן (יש כותרת והסבר)"></div>
                       ) : (
                         <div className="w-2.5 h-2.5 bg-slate-300 rounded-full shadow-[0_0_5px_rgba(203,213,225,0.8)]" title="חסר נתונים"></div>
+                      )}
+                      {data?.isApproved && (
+                        <div className="w-2.5 h-2.5 bg-amber-400 rounded-full shadow-[0_0_5px_rgba(251,191,36,0.8)]" title="בקרת איכות (מאושרת)"></div>
                       )}
                     </div>
 

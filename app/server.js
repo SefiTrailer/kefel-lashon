@@ -77,7 +77,7 @@ app.get('/api/images', (req, res) => {
 
 app.post('/api/metadata', (req, res) => {
     try {
-        const { filename, title, explanation, topic } = req.body;
+        const { filename, title, explanation, topic, isApproved, isAIGenerated } = req.body;
         let data = {};
         if (fs.existsSync(DATA_FILE)) {
             data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
@@ -111,12 +111,23 @@ app.post('/api/metadata', (req, res) => {
             }
         }
 
+        // Maintain existing flags if not explicitly provided
+        const oldEntry = data[filename] || {};
+        const finalApproved = isApproved !== undefined ? Boolean(isApproved) : Boolean(oldEntry.isApproved);
+        const finalAI = isAIGenerated !== undefined ? Boolean(isAIGenerated) : Boolean(oldEntry.isAIGenerated);
+
         // Remove old entry if renamed
         if (newFilename !== filename && data[filename]) {
             delete data[filename];
         }
 
-        data[newFilename] = { title, explanation, topic };
+        data[newFilename] = { 
+            title, 
+            explanation, 
+            topic,
+            isApproved: finalApproved,
+            isAIGenerated: finalAI
+        };
         fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
         res.json({ success: true, newFilename });
