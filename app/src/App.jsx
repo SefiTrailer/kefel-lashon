@@ -97,7 +97,8 @@ function App() {
       
       // 1. Filter Mode
       if (filterMode === 'tagged' && (!meta.title || !meta.explanation)) return false;
-      if (filterMode === 'untagged' && meta.title && meta.explanation) return false;
+      if (filterMode === 'no-title' && meta.title) return false;
+      if (filterMode === 'no-explanation' && meta.explanation) return false;
       if (filterMode === 'no-topic' && meta.topic) return false;
       if (filterMode === 'ai' && meta.isAIGenerated !== true) return false;
 
@@ -384,9 +385,10 @@ function App() {
                   dir="rtl"
                 >
                   <option value="all">כל התמונות ({allImages.length})</option>
-                  <option value="tagged">רק מתויגות</option>
-                  <option value="untagged">חסר כותרת/הסבר</option>
-                  <option value="no-topic">חסר קטגוריה (Topic)</option>
+                  <option value="tagged">מלאות (כותרת והסבר)</option>
+                  <option value="no-title">ללא כותרת</option>
+                  <option value="no-explanation">ללא הסבר</option>
+                  <option value="no-topic">ללא נושא (Topic)</option>
                   <option value="ai">🤖 תויגו רק ב-AI</option>
                 </select>
               </div>
