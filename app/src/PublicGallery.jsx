@@ -106,7 +106,7 @@ export default function PublicGallery({ images, metadata }) {
     const [hasSeenTooltip, setHasSeenTooltip] = useState(() => localStorage.getItem('kefel-tooltip') === 'true');
     const [showTooltip, setShowTooltip] = useState(false);
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(true);
-    const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest' or 'random'
+    const [sortOrder, setSortOrder] = useState('random'); // 'newest', 'oldest' or 'random'
     const [viewMode, setViewMode] = useState('single'); // 'single', 'grid-2x3', 'grid-3x4'
     const [themeIndex, setThemeIndex] = useState(() => {
         try {

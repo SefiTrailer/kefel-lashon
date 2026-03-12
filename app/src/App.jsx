@@ -37,6 +37,7 @@ function App() {
   const [publishState, setPublishState] = useState('idle'); // idle | loading | success | error | skipped
   const [publishResult, setPublishResult] = useState(null);
   const [lastCommit, setLastCommit] = useState(null);
+  const [masterCategories, setMasterCategories] = useState([]);
 
   // Detect public mode: either via env var (production build) or if not on localhost
   const isPublicViewer = import.meta.env.VITE_PUBLIC_VIEWER === 'true' || 
@@ -79,9 +80,23 @@ function App() {
 
   const [selectedTopic, setSelectedTopic] = useState(null);
 
+  const fetchMasterTags = async () => {
+    if (isPublicViewer) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/tags`);
+      if (res.ok) {
+        const data = await res.json();
+        setMasterCategories(data.categories || []);
+      }
+    } catch (e) {
+      console.error('Error fetching master tags:', e);
+    }
+  };
+
   useEffect(() => {
     fetchImages();
     fetchPublishStatus();
+    fetchMasterTags();
   }, []);
 
   // Debounce search query to prevent lag on every keystroke
@@ -647,8 +662,14 @@ function App() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="לדוגמה: חיות, היסטוריה, אוכל..."
+                  list="master-tags"
                   className="w-full text-lg px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-medium text-slate-800"
                 />
+                <datalist id="master-tags">
+                  {masterCategories.map(cat => (
+                    <option key={cat} value={cat} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="space-y-2 flex-1 flex flex-col">

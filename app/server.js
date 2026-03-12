@@ -75,6 +75,20 @@ app.get('/api/images', (req, res) => {
     }
 });
 
+app.get('/api/tags', (req, res) => {
+    try {
+        const MASTER_TAGS_FILE = path.resolve(REPO_ROOT, 'tags_master.json');
+        if (fs.existsSync(MASTER_TAGS_FILE)) {
+            const master = JSON.parse(fs.readFileSync(MASTER_TAGS_FILE, 'utf-8'));
+            res.json(master);
+        } else {
+            res.json({ categories: [], mappings: {} });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.post('/api/metadata', (req, res) => {
     try {
         const { filename, title, explanation, topic, isApproved, isAIGenerated } = req.body;
@@ -121,10 +135,46 @@ app.post('/api/metadata', (req, res) => {
             delete data[filename];
         }
 
+        // Read master tags for normalization
+        const MASTER_TAGS_FILE = path.resolve(REPO_ROOT, 'tags_master.json');
+        let normalizedTopic = topic;
+        if (fs.existsSync(MASTER_TAGS_FILE) && topic) {
+            try {
+                const master = JSON.parse(fs.readFileSync(MASTER_TAGS_FILE, 'utf-8'));
+                const rawTags = topic.split(',').map(t => t.trim()).filter(Boolean);
+                const normalizedSet = new Set();
+                
+                rawTags.forEach(tag => {
+                    // Direct mapping or category match
+                    if (master.mappings && master.mappings[tag]) {
+                        normalizedSet.add(master.mappings[tag]);
+                    } else if (master.categories && master.categories.includes(tag)) {
+                        normalizedSet.add(tag);
+                    } else {
+                        // Fuzzy match / Partial match
+                        let found = false;
+                        if (master.mappings) {
+                            for (const [key, val] of Object.entries(master.mappings)) {
+                                if (tag.includes(key) || key.includes(tag)) {
+                                    normalizedSet.add(val);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!found) normalizedSet.add(tag);
+                    }
+                });
+                normalizedTopic = Array.from(normalizedSet).join(', ');
+            } catch (err) {
+                console.error('Error normalizing tags:', err);
+            }
+        }
+
         data[newFilename] = { 
             title, 
             explanation, 
-            topic,
+            topic: normalizedTopic,
             isApproved: finalApproved,
             isAIGenerated: finalAI
         };
