@@ -262,6 +262,56 @@ export default function PublicGallery({ images, metadata }) {
         }
     };
 
+    const handleQRCodeClick = useCallback(async (e) => {
+        if (e) e.stopPropagation();
+        
+        const url = window.location.href;
+        const qrImagePath = './qrcode.png';
+
+        try {
+            // 1. Fetch the image as a blob
+            const response = await fetch(qrImagePath);
+            const blob = await response.blob();
+            const file = new File([blob], 'qrcode.png', { type: blob.type });
+
+            // 2. Try Web Share API (Files support)
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'כפלשון - QR Code',
+                    text: 'סרקו והצטרפו לגלריית כפלשון!'
+                });
+                return;
+            }
+
+            // 3. Fallback to Clipboard API (Image copy)
+            if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ [blob.type]: blob })
+                    ]);
+                    alert('תמונת ה-QR הועתקה ללוח! ניתן להדביק אותה בצ\'אט.');
+                    return;
+                } catch (clipboardErr) {
+                    console.error('Clipboard image copy failed', clipboardErr);
+                }
+            }
+
+            // 4. Final Fallback (URL copy)
+            if (navigator.clipboard) {
+                await navigator.clipboard.writeText(url);
+                alert('הקישור לאתר הועתק ללוח!');
+            }
+        } catch (err) {
+            console.error('Sharing failed', err);
+            // Emergency fallback
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).catch(() => {});
+                alert('הקישור לאתר הועתק ללוח!');
+            }
+        }
+    }, []);
+
     useEffect(() => { 
         // Only reset to 0 if we are STARTING a search or switching view modes.
         // If searchQuery is empty AND it was previously something, we are closing search - don't reset index.
@@ -778,17 +828,7 @@ export default function PublicGallery({ images, metadata }) {
                                     {/* QR — fills ~45% of row */}
                                     <div
                                         className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden flex-1 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.02] aspect-square"
-                                        onClick={async () => {
-                                            const url = window.location.href;
-                                            try {
-                                                if (navigator.share) {
-                                                    await navigator.share({ title: 'כפלשון', url: url });
-                                                } else {
-                                                    await navigator.clipboard.writeText(url);
-                                                    alert('הקישור הועתק הלוח!');
-                                                }
-                                            } catch (err) { }
-                                        }}
+                                        onClick={handleQRCodeClick}
                                     >
                                         <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
                                         <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
@@ -828,17 +868,7 @@ export default function PublicGallery({ images, metadata }) {
                                     <div
                                         className="relative group cursor-pointer rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.5)] bg-white overflow-hidden shrink-0 flex items-center justify-center border-[3px] border-white/80 transition-all duration-500 hover:shadow-[0_0_35px_rgba(255,105,180,0.6)] hover:border-pink-300 hover:scale-[1.03]"
                                         style={{ width: `${sidebarH * 0.22}px`, height: `${sidebarH * 0.22}px` }}
-                                        onClick={async () => {
-                                            const url = window.location.href;
-                                            try {
-                                                if (navigator.share) {
-                                                    await navigator.share({ title: 'כפלשון', url: url });
-                                                } else {
-                                                    await navigator.clipboard.writeText(url);
-                                                    alert('הקישור הועתק הלוח!');
-                                                }
-                                            } catch (err) { }
-                                        }}
+                                        onClick={handleQRCodeClick}
                                     >
                                         <img src="./qrcode.png" alt="QR Code" className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1" />
                                         <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm z-10">
