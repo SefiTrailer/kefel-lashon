@@ -106,7 +106,7 @@ export default function PublicGallery({ images, metadata }) {
     const [hasSeenTooltip, setHasSeenTooltip] = useState(() => localStorage.getItem('kefel-tooltip') === 'true');
     const [showTooltip, setShowTooltip] = useState(false);
     const [showFullscreenInfo, setShowFullscreenInfo] = useState(true);
-    const [sortOrder, setSortOrder] = useState('newest'); // 'newest' or 'random'
+    const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest' or 'random'
     const [viewMode, setViewMode] = useState('single'); // 'single', 'grid-2x3', 'grid-3x4'
     const [themeIndex, setThemeIndex] = useState(() => {
         try {
@@ -171,7 +171,9 @@ export default function PublicGallery({ images, metadata }) {
                 return arr.sort((a, b) => {
                     const dateA = metadata[a]?.dateMillis || 0;
                     const dateB = metadata[b]?.dateMillis || 0;
-                    if (dateA !== dateB) return dateB - dateA; // Newest first
+                    if (dateA !== dateB) {
+                        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+                    }
 
                     // Fallback to older logic if dateMillis not present
                     const extractDate = (filename) => {
@@ -180,9 +182,11 @@ export default function PublicGallery({ images, metadata }) {
                     };
                     const fbA = extractDate(a);
                     const fbB = extractDate(b);
-                    if (fbA && fbB) return fbB - fbA;
-                    if (fbA) return -1;
-                    if (fbB) return 1;
+                    if (fbA && fbB) {
+                        return sortOrder === 'newest' ? fbB - fbA : fbA - fbB;
+                    }
+                    if (fbA) return sortOrder === 'newest' ? -1 : 1;
+                    if (fbB) return sortOrder === 'newest' ? 1 : -1;
                     return 0;
                 });
             } else {
@@ -259,10 +263,16 @@ export default function PublicGallery({ images, metadata }) {
     };
 
     useEffect(() => { 
-        if (!isSelectingResult.current) {
+        // Only reset to 0 if we are STARTING a search or switching view modes.
+        // If searchQuery is empty AND it was previously something, we are closing search - don't reset index.
+        if (isSelectingResult.current) {
+            isSelectingResult.current = false;
+            return;
+        }
+
+        if (searchQuery || viewMode !== 'single') {
             setCurrentIndex(0); 
         }
-        isSelectingResult.current = false;
     }, [searchQuery, viewMode]);
 
     // Force single view mode on small screens (mobile)
@@ -582,8 +592,8 @@ export default function PublicGallery({ images, metadata }) {
                                                     }}
                                                 >
                                                     <span className="text-white/70 text-sm font-bold pointer-events-none">מיון:</span>
-                                                    <div className="relative flex items-center bg-transparent text-white text-sm font-medium pr-1 pl-6 hover:text-white/80 transition-colors z-10 w-[100px] justify-start whitespace-nowrap">
-                                                        <span>{sortOrder === 'newest' ? 'הכי חדשים' : 'אקראי'}</span>
+                                                    <div className="relative flex items-center bg-transparent text-white text-sm font-medium pr-1 pl-6 hover:text-white/80 transition-colors z-10 w-[110px] justify-start whitespace-nowrap">
+                                                        <span>{sortOrder === 'newest' ? 'הכל חדש' : (sortOrder === 'oldest' ? 'הכל ישן' : 'אקראי')}</span>
                                                         <div className={`absolute left-1 text-white/50 text-[10px] transition-transform ${isSortOpen ? 'rotate-180' : ''}`}>▲</div>
 
                                                         {/* Upwards Dropdown Menu (Click based) */}
@@ -592,7 +602,11 @@ export default function PublicGallery({ images, metadata }) {
                                                                 <div
                                                                     className={`px-4 py-2.5 text-sm text-right transition-colors ${sortOrder === 'newest' ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:bg-white/5'}`}
                                                                     onClick={(e) => { e.stopPropagation(); setSortOrder('newest'); setIsSortOpen(false); }}
-                                                                >הכי חדשים</div>
+                                                                >מהחדש לישן</div>
+                                                                <div
+                                                                    className={`px-4 py-2.5 text-sm text-right transition-colors ${sortOrder === 'oldest' ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:bg-white/5'}`}
+                                                                    onClick={(e) => { e.stopPropagation(); setSortOrder('oldest'); setIsSortOpen(false); }}
+                                                                >מהישן לחדש</div>
                                                                 <div
                                                                     className={`px-4 py-2.5 text-sm text-right transition-colors ${sortOrder === 'random' ? 'text-white font-bold bg-white/10' : 'text-white/70 hover:bg-white/5'}`}
                                                                     onClick={(e) => { e.stopPropagation(); setSortOrder('random'); setIsSortOpen(false); }}
