@@ -17,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 const IMAGES_DIR = path.resolve(__dirname, '../app/תמונות מקור');
+const NEW_IMAGES_DIR = path.resolve(__dirname, '../תמונות חדשות');
 const DATA_FILE = path.resolve(__dirname, '../data.json');
 const PUBLIC_DIR = path.resolve(__dirname, '../app/public/images'); // Define PUBLIC_DIR
 
@@ -37,13 +38,24 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use('/images', express.static(IMAGES_DIR));
+app.use('/images', express.static(NEW_IMAGES_DIR));
 
 app.get('/api/images', (req, res) => {
     try {
         if (!fs.existsSync(IMAGES_DIR)) {
             return res.status(404).json({ error: 'Images directory not found' });
         }
-        const files = fs.readdirSync(IMAGES_DIR).filter(file => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+        const sourceFiles = fs.readdirSync(IMAGES_DIR).filter(file => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+        let newFiles = [];
+        if (fs.existsSync(NEW_IMAGES_DIR)) {
+            newFiles = fs.readdirSync(NEW_IMAGES_DIR).filter(file => file.endsWith('.png') || file.endsWith('.jpg') || file.endsWith('.jpeg'));
+        }
+
+        // Merge files and track their source for the frontend
+        const files = [...sourceFiles, ...newFiles];
+        const fileSources = {};
+        sourceFiles.forEach(f => fileSources[f] = 'source');
+        newFiles.forEach(f => fileSources[f] = 'new');
 
         let data = {};
         if (fs.existsSync(DATA_FILE)) {
@@ -62,14 +74,15 @@ app.get('/api/images', (req, res) => {
         const fileStats = {};
         files.forEach(file => {
             try {
-                const stat = fs.statSync(path.join(IMAGES_DIR, file));
+                const dir = fileSources[file] === 'new' ? NEW_IMAGES_DIR : IMAGES_DIR;
+                const stat = fs.statSync(path.join(dir, file));
                 fileStats[file] = stat.size;
             } catch (err) {
                 fileStats[file] = 0;
             }
         });
 
-        res.json({ files, data, fileStats });
+        res.json({ files, data, fileStats, fileSources });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -98,7 +111,15 @@ app.post('/api/metadata', (req, res) => {
         }
 
         let newFilename = filename;
-        const oldFilePath = path.join(IMAGES_DIR, filename);
+        
+        // Detect current source
+        const currentInNew = fs.existsSync(path.join(NEW_IMAGES_DIR, filename));
+        const currentInSource = fs.existsSync(path.join(IMAGES_DIR, filename));
+        
+        let oldFilePath = currentInNew ? path.join(NEW_IMAGES_DIR, filename) : path.join(IMAGES_DIR, filename);
+
+        // If it's a new image, we MUST move it to source (and public) even if title doesn't change
+        const isFromNewFolder = currentInNew;
 
         // If there's a title, we try to rename the file
         if (title && title.trim() !== '') {
@@ -110,18 +131,48 @@ app.post('/api/metadata', (req, res) => {
                 let targetPath = path.join(IMAGES_DIR, targetFilename);
 
                 // If it's a different name, and the target doesn't exist (unless we just overwrite)
-                if (filename !== targetFilename) {
+                if (filename !== targetFilename || isFromNewFolder) {
                     let counter = 1;
-                    while (fs.existsSync(targetPath)) {
+                    while (fs.existsSync(targetPath) && (targetFilename !== filename || !isFromNewFolder)) {
                         targetFilename = `${sanitizedTitle}_${counter}${ext}`;
                         targetPath = path.join(IMAGES_DIR, targetFilename);
                         counter++;
                     }
+                    
                     if (fs.existsSync(oldFilePath)) {
                         fs.renameSync(oldFilePath, targetPath);
                         newFilename = targetFilename;
                     }
                 }
+            }
+        } else if (isFromNewFolder) {
+            // No title changed, but it's in the new folder - just move it to source as is
+            const targetPath = path.join(IMAGES_DIR, filename);
+            if (!fs.existsSync(targetPath)) {
+                fs.renameSync(oldFilePath, targetPath);
+            } else {
+                // Conflict in source? Generate unique name
+                const ext = path.extname(filename);
+                const base = path.basename(filename, ext);
+                let counter = 1;
+                let altFilename = `${base}_${counter}${ext}`;
+                let altPath = path.join(IMAGES_DIR, altFilename);
+                while (fs.existsSync(altPath)) {
+                    counter++;
+                    altFilename = `${base}_${counter}${ext}`;
+                    altPath = path.join(IMAGES_DIR, altFilename);
+                }
+                fs.renameSync(oldFilePath, altPath);
+                newFilename = altFilename;
+            }
+        }
+
+        // Also sync to public images if it was moved from new or renamed
+        if (isFromNewFolder || newFilename !== filename) {
+            const finalSourcePath = path.join(IMAGES_DIR, newFilename);
+            const finalPublicPath = path.join(PUBLIC_DIR, newFilename);
+            if (fs.existsSync(finalSourcePath)) {
+                fs.copyFileSync(finalSourcePath, finalPublicPath);
             }
         }
 
@@ -190,17 +241,13 @@ app.delete('/api/images/:filename', (req, res) => {
     try {
         const { filename } = req.params;
         const sourceFilePath = path.join(IMAGES_DIR, filename);
+        const newImagesPath = path.join(NEW_IMAGES_DIR, filename);
         const publicFilePath = path.join(__dirname, '../app/public/images', filename);
 
-        // Delete the physical file from תמונות מקור if it exists
-        if (fs.existsSync(sourceFilePath)) {
-            fs.unlinkSync(sourceFilePath);
-        }
-        
-        // Delete the physical file from public/images if it exists
-        if (fs.existsSync(publicFilePath)) {
-            fs.unlinkSync(publicFilePath);
-        }
+        // Delete the physical file from folders if they exist
+        if (fs.existsSync(sourceFilePath)) fs.unlinkSync(sourceFilePath);
+        if (fs.existsSync(newImagesPath)) fs.unlinkSync(newImagesPath);
+        if (fs.existsSync(publicFilePath)) fs.unlinkSync(publicFilePath);
 
         // Remove from metadata
         let data = {};

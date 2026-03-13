@@ -18,7 +18,7 @@ function formatBytes(bytes) {
 function App() {
   const [images, setImages] = useState([]);
   const [allImages, setAllImages] = useState([]);
-  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'tagged' | 'untagged' | 'no-topic' | 'ai'
+  const [filterMode, setFilterMode] = useState('all'); // 'all' | 'tagged' | 'untagged' | 'no-topic' | 'ai' | 'new-images'
   const [metadata, setMetadata] = useState({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [title, setTitle] = useState('');
@@ -31,6 +31,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [fileSizes, setFileSizes] = useState({});
+  const [fileSources, setFileSources] = useState({});
   const [adminViewMode, setAdminViewMode] = useState('edit'); // 'edit' | 'grid'
 
   // ── Publish state ──
@@ -57,7 +58,8 @@ function App() {
       setAllImages(data.files || []);
       setImages(data.files || []);
       setMetadata(data.data || {});
-      setFileSizes(data.fileStats || {}); // Assuming fileStats is the correct property for fileSizes
+      setFileSizes(data.fileStats || {});
+      setFileSources(data.fileSources || {});
     } catch (e) {
       console.error('Error fetching images:', e);
       setError(e.message);
@@ -119,6 +121,7 @@ function App() {
       if (filterMode === 'ai' && meta.isAIGenerated !== true) return false;
       if (filterMode === 'approved' && meta.isApproved !== true) return false;
       if (filterMode === 'not-approved' && meta.isApproved === true) return false;
+      if (filterMode === 'new-images' && fileSources[img] !== 'new') return false;
 
       // 2. Topic Filter
       if (selectedTopic && (!meta.topic || !meta.topic.includes(selectedTopic))) return false;
@@ -262,6 +265,17 @@ function App() {
 
       const resData = await res.json();
       const newFilename = resData.newFilename || currentFile;
+
+      // If it was a new image, it moved, so we better refresh images to get updated sources
+      const wasNew = fileSources[currentFile] === 'new';
+      if (wasNew) {
+          await fetchImages();
+          setIsSaving(false);
+          if (goToNext && currentIndex < images.length - 1) {
+              setCurrentIndex(prev => prev + 1);
+          }
+          return;
+      }
 
       setMetadata(prev => {
         const newData = { ...prev };
@@ -434,6 +448,7 @@ function App() {
                   <option value="ai">🤖 תויגו רק ב-AI</option>
                   <option value="approved">✅ עברו בקרה / מאושרות</option>
                   <option value="not-approved">⏳ לא עברו בקרה / ממתינות</option>
+                  <option value="new-images">🆕 תמונות חדשות (בתיקיית קליטה)</option>
                 </select>
               </div>
 
